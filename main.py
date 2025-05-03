@@ -3,7 +3,7 @@ import google.generativeai as genai
 import json
 import os
 
-genai.configure(api_key="")
+genai.configure(api_key="AIzaSyBnaUhLpBZn0fv5Yo_91ghbmQbwf6niUv4")
 model = genai.GenerativeModel('gemini-2.0-flash-lite')
 
 app = FastAPI()
@@ -28,6 +28,14 @@ def json_set_schedule(name: str, schedule: str):
 def read_root():
     return {"message": "Hello from your FastAPI server!"}
 
+@app.post("/test_post/")
+def receive_message(sender: str, content: str):
+    return {
+        "status": "Received",
+        "from": sender,
+        "content": content
+    }
+
 #User Orginal Scedule 
 @app.post("/set_schedule/")
 def add_schedule(name: str, schedule: str):
@@ -37,7 +45,7 @@ def add_schedule(name: str, schedule: str):
 @app.post("/schedule_change/")
 # marked async because we're about to await something: reading JSON from the request.
 async def adjust_schedule(request: Request):
-    body = await request.json() # Reads the raw JSON body from the request. Converts it into a Python dictionary.
+    body = await request.json() #Reads the raw JSON body from the request. Converts it into a Python dictionary.
     name = body.get("name")
     change = body.get("change")
 
