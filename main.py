@@ -3,7 +3,7 @@ import google.generativeai as genai
 import json
 import os
 
-genai.configure(api_key="AIzaSyBnaUhLpBZn0fv5Yo_91ghbmQbwf6niUv4")
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 model = genai.GenerativeModel('gemini-2.0-flash-lite')
 
 app = FastAPI()
