@@ -38,7 +38,10 @@ def receive_message(sender: str, content: str):
 
 #User Orginal Scedule 
 @app.post("/set_schedule/")
-def add_schedule(name: str, schedule: str):
+async def add_schedule(request: Request):
+    body = await request.json()
+    name = body.get("name")
+    schedule = body.get("schedule")
     json_set_schedule(name, schedule)
     return {"status": "Schedule saved", "user": name, "schedule": schedule}
 
