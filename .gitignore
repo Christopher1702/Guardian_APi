@@ -1,5 +1,5 @@
 # Firebase key file
-firebase_admin_key.json
+firebase_key.json
 
 # Environment variables
 .env
