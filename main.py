@@ -2,16 +2,19 @@ from fastapi import FastAPI, Request
 import google.generativeai as genai
 import json
 import os
-# from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.middleware.cors import CORSMiddleware
+import firebase_admin
+from firebase_admin import credentials, firestore
+from dotenv import load_dotenv
 
 genai.configure(api_key="AIzaSyBnaUhLpBZn0fv5Yo_91ghbmQbwf6niUv4")
 model = genai.GenerativeModel('gemini-2.0-flash-lite')
 
-# MONGO_URI = "mongodb+srv://christopherdherman2317:7P783vXCTrq9cAht@guardian.nhsqmn8.mongodb.net/?retryWrites=true&w=majority&appName=Guardian"
-# client = AsyncIOMotorClient(MONGO_URI)
-# db = client["Guardian_db"]
-# collection = db["schedules"]
+load_dotenv()
+cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
+cred = credentials.Certificate(cred_path)
+firebase_admin.initialize_app(cred)
+db = firestore.client()
 
 app = FastAPI()
 DATA_FILE = "users.json"
@@ -99,5 +102,16 @@ def clear_json():
     with open(DATA_FILE, "w") as file:
         json.dump({}, file)
     return {"status": "JSON file cleared."}
+
+@app.post("/save")
+async def save_user(request: Request):
+    body = await request.json()
+    name = body.get("name")
+
+    db.collection("users").document(name).set({
+        "name": name
+    })
+
+    return {"status": "Name saved", "user": name}
 
 # python -m uvicorn main:app --reload
