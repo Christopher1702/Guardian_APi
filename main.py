@@ -2,16 +2,16 @@ from fastapi import FastAPI, Request
 import google.generativeai as genai
 import json
 import os
-from motor.motor_asyncio import AsyncIOMotorClient
+# from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.middleware.cors import CORSMiddleware
 
 genai.configure(api_key="AIzaSyBnaUhLpBZn0fv5Yo_91ghbmQbwf6niUv4")
 model = genai.GenerativeModel('gemini-2.0-flash-lite')
 
-MONGO_URI = "mongodb+srv://christopherdherman2317:7P783vXCTrq9cAht@guardian.nhsqmn8.mongodb.net/?retryWrites=true&w=majority&appName=Guardian"
-client = AsyncIOMotorClient(MONGO_URI)
-db = client["Guardian_db"]
-collection = db["schedules"]
+# MONGO_URI = "mongodb+srv://christopherdherman2317:7P783vXCTrq9cAht@guardian.nhsqmn8.mongodb.net/?retryWrites=true&w=majority&appName=Guardian"
+# client = AsyncIOMotorClient(MONGO_URI)
+# db = client["Guardian_db"]
+# collection = db["schedules"]
 
 app = FastAPI()
 DATA_FILE = "users.json"
