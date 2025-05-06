@@ -1,1 +1,9 @@
+# Firebase key file
+firebase_admin_key.json
 
+# Environment variables
+.env
+
+# Python cache files
+__pycache__/
+*.pyc
