@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 import google.generativeai as genai
 import json
 import os
@@ -7,7 +8,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from dotenv import load_dotenv
 
-genai.configure(api_key="AIzaSyBnaUhLpBZn0fv5Yo_91ghbmQbwf6niUv4")
+genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 model = genai.GenerativeModel('gemini-2.0-flash-lite')
 
 load_dotenv()
@@ -107,11 +108,20 @@ def clear_json():
 async def save_user(request: Request):
     body = await request.json()
     name = body.get("name")
-
-    db.collection("users").document(name).set({
+    db.collection("Users").document(name).set({
         "name": name
     })
-
     return {"status": "Name saved", "user": name}
 
-# python -m uvicorn main:app --reload
+@app.post("/read")
+async def read_user(request: Request):
+    body = await request.json()
+    name = body.get("name")
+
+    doc_ref = db.collection("Users").document(name)
+    doc = doc_ref.get()
+
+    if doc.exists:
+        return {"status": "Found", "data": doc.to_dict()}
+    else:
+        return JSONResponse(status_code=404, content={"status": "Not found", "user": name})
