@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import Request, FastAPI
+from fastapi.responses import PlainTextResponse
 import google.generativeai as genai
 import json
 import os
@@ -59,17 +59,18 @@ async def save_user(request: Request):
     })
     return {"status": "Name saved", "user": name, "schedule" : schedule_set}
 
-@app.post("/read")
+@app.post("/read", response_class=PlainTextResponse)
 async def read_user(request: Request):
-    body = await request.json()
-    name = body.get("name")
+    # Step 1: Get plain text name
+    name = (await request.body()).decode("utf-8")
 
-    doc_ref = db.collection("Users").document(name)
+    # Step 2: Look up that document in Firestore
+    doc_ref = db.collection("Guardian").document(name)
     doc = doc_ref.get()
 
+    # Step 3: If found, return just the schedule as plain text
     if doc.exists:
-        return {"status": "Found", "data": doc.to_dict()}
+        data = doc.to_dict()
+        return data.get("schedule", "No schedule found in doc.")
     else:
-        return JSONResponse(status_code=404, content={"status": "Not found", "user": name})
-
-# python -m uvicorn main:app --reload
+        return f"Schedule not found for {name}"
