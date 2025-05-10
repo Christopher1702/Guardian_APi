@@ -102,47 +102,31 @@ def read_schedule():
         return {"error": "No image uploaded yet."}
 
     try:
-        # Convert image bytes to a PIL Image
+        # Convert bytes to PIL Image
         image = Image.open(io.BytesIO(stored_image))
 
-        # Prompt the model to extract and return schedule
         prompt = """
-        Analyze this image, which contains a weekly schedule.
-        Extract the data and return it in this strict JSON format:
-        Only return valid JSON — no explanation, no extra text.
+        Analyze this image and extract the user's weekly schedule. 
+        Format it clearly using headings for each day and list events with their times.
         """
 
-        # Send prompt and image to Gemini
+        # Send image + prompt
         response = model.generate_content([prompt, image])
 
-        # DEBUG: Show raw response
-        print("Gemini response text:", repr(response.text))
+        # DEBUG: show the raw text for dev logging
+        print("Gemini response:\n", response.text)
 
-        # Check if response is empty or non-JSON
-        if not response.text or not response.text.strip():
+        if not response.text.strip():
             return {"error": "Gemini returned an empty response."}
 
-        try:
-            # Try parsing the response into JSON
-            schedule_data = json.loads(response.text)
-        except json.JSONDecodeError:
-            return {"error": "Gemini response was not valid JSON."}
-
-        # Save the valid schedule to a file
-        with open("schedule.json", "w") as f:
-            json.dump(schedule_data, f, indent=2)
-
-        return schedule_data
+        # Return raw text instead of parsing
+        return {"response": response.text}
 
     except Exception as e:
-        print("Failed to read or process schedule:", e)
+        print("Failed to process schedule:", e)
         return {"error": "Schedule reading failed"}
 
 @app.get("/view")
 def view_schedule():
     result = read_schedule()
-
-    if "error" in result:
-        return JSONResponse(status_code=400, content=result)
-
     return result
