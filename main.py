@@ -102,17 +102,36 @@ def read_schedule():
         return {"error": "No image uploaded yet."}
 
     try:
+        # Convert image bytes to a PIL Image
         image = Image.open(io.BytesIO(stored_image))
-        prompt = "Take this image and generate a JSON formatted string of the user's schedule."
+
+        # Use Gemini multimodal model (supports vision)
+        model = genai.GenerativeModel("gemini-pro-vision")
+
+        # Prompt the model to extract and return schedule
+        prompt = """
+        Analyze this image, which contains a weekly schedule.
+        Extract the data and return it in this strict JSON format:
+        Only return valid JSON — no explanation, no extra text.
+        """
+
+        # Send prompt and image to Gemini
         response = model.generate_content([prompt, image])
 
-        # Ensure Gemini responded with something
-        if not response.text.strip():
-            return {"error": "Gemini returned empty response."}
+        # DEBUG: Show raw response
+        print("Gemini response text:", repr(response.text))
 
-        # Parse JSON
-        schedule_data = json.loads(response.text)
+        # Check if response is empty or non-JSON
+        if not response.text or not response.text.strip():
+            return {"error": "Gemini returned an empty response."}
 
+        try:
+            # Try parsing the response into JSON
+            schedule_data = json.loads(response.text)
+        except json.JSONDecodeError:
+            return {"error": "Gemini response was not valid JSON."}
+
+        # Save the valid schedule to a file
         with open("schedule.json", "w") as f:
             json.dump(schedule_data, f, indent=2)
 
