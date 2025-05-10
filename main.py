@@ -110,6 +110,8 @@ def read_schedule():
         Format it as a Json where each day is an object with a list of activities that include start and end times.
         """
 
+        print("This is a test")
+
         # Send image + prompt
         response = model.generate_content([prompt, image])
 
