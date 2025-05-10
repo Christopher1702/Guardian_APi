@@ -120,7 +120,7 @@ def read_schedule():
         with open("schedule.json", "w") as f:
             json.dump(schedule_data, f, indent=2)
 
-        return schedule_data
+        # return schedule_data
 
     except Exception as e:
         print("Failed to read or process schedule:", e)
@@ -128,6 +128,7 @@ def read_schedule():
 
 @app.get("/view")
 def view_schedule():
+    read_schedule()
     try:
         # Check if the schedule file exists
         if not os.path.exists("schedule.json"):
