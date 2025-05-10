@@ -42,7 +42,7 @@ def receive_message(sender: str, content: str):
         "status": "Received",
         "from": "sender",
         "content": "content",
-        "Version": 1
+        "Version": 2
     }
 
 @app.post("/set_schedule/") #User Orginal Scedule 
