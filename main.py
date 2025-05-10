@@ -106,8 +106,8 @@ def read_schedule():
         image = Image.open(io.BytesIO(stored_image))
 
         prompt = """
-        Analyze this image and extract the user's weekly schedule. 
-        Format it clearly using headings for each day and list events with their times.
+        Analyze this image and extract the user's weekly schedule, ignoring dates as everything is recurring weekly. 
+        Format it as a Json where each day is an object with a list of activities that include start and end times.
         """
 
         # Send image + prompt
