@@ -13,7 +13,7 @@ import io
 
 #----------------------------------------------------------------------------------------
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
-model = genai.GenerativeModel('gemini-2.0-flash-lite')
+model = genai.GenerativeModel('gemini-2.0-flash')
 load_dotenv()
 cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
 cred = credentials.Certificate(cred_path)
@@ -102,22 +102,21 @@ def read_schedule():
         return {"error": "No image uploaded yet."}
 
     try:
-        # Convert image bytes to PIL
         image = Image.open(io.BytesIO(stored_image))
+        prompt = "Take this image and generate a JSON formatted string of the user's schedule."
+        response = model.generate_content([prompt, image])
 
-        # Prepare multimodal prompt
-        prompt = """Take this image and generate a json formatted string of the users schedule"""
+        # Ensure Gemini responded with something
+        if not response.text.strip():
+            return {"error": "Gemini returned empty response."}
 
-        response = model.generate_content([image, prompt])
-
-        # Try parsing response text as JSON
+        # Parse JSON
         schedule_data = json.loads(response.text)
 
-        # Save to file
         with open("schedule.json", "w") as f:
             json.dump(schedule_data, f, indent=2)
 
-        # return schedule_data
+        return schedule_data
 
     except Exception as e:
         print("Failed to read or process schedule:", e)
@@ -125,17 +124,9 @@ def read_schedule():
 
 @app.get("/view")
 def view_schedule():
-    read_schedule()
-    try:
-        # Check if the schedule file exists
-        if not os.path.exists("schedule.json"):
-            return JSONResponse(status_code=404, content={"error": "Schedule file not found"})
+    result = read_schedule()
 
-        # Read and return JSON contents
-        with open("schedule.json", "r") as f:
-            data = json.load(f)
-        return data
+    if "error" in result:
+        return JSONResponse(status_code=400, content=result)
 
-    except Exception as e:
-        print("Failed to read schedule.json:", e)
-        return JSONResponse(status_code=500, content={"error": "Failed to read schedule"})
+    return result
