@@ -105,13 +105,10 @@ def read_schedule():
         # Convert image bytes to PIL
         image = Image.open(io.BytesIO(stored_image))
 
-        # Upload image to Gemini
-        gemini_image = genai.upload_image(image, mime_type="image/jpeg")
-
         # Prepare multimodal prompt
         prompt = """Take this image and generate a json formatted string of the users schedule"""
 
-        response = model.generate_content([gemini_image, prompt])
+        response = model.generate_content([image, prompt])
 
         # Try parsing response text as JSON
         schedule_data = json.loads(response.text)
