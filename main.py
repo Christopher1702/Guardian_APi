@@ -66,7 +66,8 @@ async def save_user(request: Request):
 
     return f"Schedule saved: {schedule_text}"
 
-@app.post("/read", response_class=PlainTextResponse)
+# @app.post("/read", response_class=PlainTextResponse)
+@app.post("/read",response_class=JSONResponse)
 async def read_user(request: Request):
     # Step 1: Get plain text name
     name = (await request.body()).decode("utf-8")
