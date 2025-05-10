@@ -79,7 +79,8 @@ async def read_user(request: Request):
     # Step 3: If found, return just the schedule as plain text
     if doc.exists:
         data = doc.to_dict()
-        return data.get("schedule", "No schedule found in doc.")
+        # return data.get("schedule", "No schedule found in doc.")
+        return data
     else:
         return f"Schedule not found for {name}"
 
