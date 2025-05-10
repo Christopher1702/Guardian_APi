@@ -93,8 +93,6 @@ async def upload_image(file: UploadFile = File(...)):
     # Optionally log metadata
     print(f"Received image: {file.filename} ({file.content_type}), size: {len(stored_image)} bytes")
 
-    print(read_schedule)
-
     return {"status": "success", "filename": file.filename, "size_bytes": len(stored_image)}
 
 def read_schedule():
@@ -127,3 +125,19 @@ def read_schedule():
     except Exception as e:
         print("Failed to read or process schedule:", e)
         return {"error": "Schedule reading failed"}
+
+@app.get("/view")
+def view_schedule():
+    try:
+        # Check if the schedule file exists
+        if not os.path.exists("schedule.json"):
+            return JSONResponse(status_code=404, content={"error": "Schedule file not found"})
+
+        # Read and return JSON contents
+        with open("schedule.json", "r") as f:
+            data = json.load(f)
+        return data
+
+    except Exception as e:
+        print("Failed to read schedule.json:", e)
+        return JSONResponse(status_code=500, content={"error": "Failed to read schedule"})
