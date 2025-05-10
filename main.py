@@ -72,7 +72,8 @@ async def read_user(request: Request):
     name = (await request.body()).decode("utf-8")
 
     # Step 2: Look up that document in Firestore
-    doc_ref = db.collection("Guardian").document("USERS")
+    # doc_ref = db.collection("Guardian").document("USERS")
+    doc_ref = db.collection("Users").document("Christopher")
     doc = doc_ref.get()
 
     # Step 3: If found, return just the schedule as plain text
