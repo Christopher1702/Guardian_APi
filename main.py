@@ -13,7 +13,7 @@ import io
 
 #----------------------------------------------------------------------------------------
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
-model = genai.GenerativeModel('gemini-2.0-flash-lite')
+model = genai.GenerativeModel('gemini-2.0-flash')
 load_dotenv()
 cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
 cred = credentials.Certificate(cred_path)
@@ -104,9 +104,6 @@ def read_schedule():
     try:
         # Convert image bytes to a PIL Image
         image = Image.open(io.BytesIO(stored_image))
-
-        # Use Gemini multimodal model (supports vision)
-        model = genai.GenerativeModel("gemini-pro-vision")
 
         # Prompt the model to extract and return schedule
         prompt = """
