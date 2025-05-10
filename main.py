@@ -36,7 +36,7 @@ app.add_middleware(
 def read_root():
     return {"message": "Hello from your FastAPI server!"}
 
-@app.post("/test_post/")
+@app.get("/test_post/")
 # def receive_message(sender: str, content: str):
 def receive_message():
     return {
