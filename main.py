@@ -8,6 +8,8 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from dotenv import load_dotenv
 from typing import Optional
+from PIL import Image
+import io
 
 #----------------------------------------------------------------------------------------
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
@@ -42,8 +44,7 @@ def receive_message(sender: str, content: str):
         "content": content
     }
 
-#User Orginal Scedule 
-@app.post("/set_schedule/")
+@app.post("/set_schedule/") #User Orginal Scedule 
 async def add_schedule(request: Request):
     body = await request.json()
     name = body.get("name")
@@ -92,4 +93,37 @@ async def upload_image(file: UploadFile = File(...)):
     # Optionally log metadata
     print(f"Received image: {file.filename} ({file.content_type}), size: {len(stored_image)} bytes")
 
+    print(read_schedule)
+
     return {"status": "success", "filename": file.filename, "size_bytes": len(stored_image)}
+
+def read_schedule():
+    global stored_image
+
+    if stored_image is None:
+        return {"error": "No image uploaded yet."}
+
+    try:
+        # Convert image bytes to PIL
+        image = Image.open(io.BytesIO(stored_image))
+
+        # Upload image to Gemini
+        gemini_image = genai.upload_image(image, mime_type="image/jpeg")
+
+        # Prepare multimodal prompt
+        prompt = """Take this image and generate a json formatted string of the users schedule"""
+
+        response = model.generate_content([gemini_image, prompt])
+
+        # Try parsing response text as JSON
+        schedule_data = json.loads(response.text)
+
+        # Save to file
+        with open("schedule.json", "w") as f:
+            json.dump(schedule_data, f, indent=2)
+
+        return schedule_data
+
+    except Exception as e:
+        print("Failed to read or process schedule:", e)
+        return {"error": "Schedule reading failed"}
