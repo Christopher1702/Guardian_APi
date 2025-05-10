@@ -40,8 +40,9 @@ def read_root():
 def receive_message(sender: str, content: str):
     return {
         "status": "Received",
-        "from": sender,
-        "content": content
+        "from": "sender",
+        "content": "content",
+        "Version": 1
     }
 
 @app.post("/set_schedule/") #User Orginal Scedule 
@@ -110,7 +111,6 @@ def read_schedule():
         Format it as a Json where each day is an object with a list of activities that include start and end times.
         """
 
-        print("This is a test")
 
         # Send image + prompt
         response = model.generate_content([prompt, image])
