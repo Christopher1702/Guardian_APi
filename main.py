@@ -23,7 +23,7 @@ app = FastAPI()
 stored_image: Optional[bytes] = None # This will hold the image content in memory
 #----------------------------------------------------------------------------------------
 
-# Allow all origins (good for testing, not for production!)
+ # Allow all origins (good for testing, not for production!)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Or use your actual frontend URL
@@ -32,58 +32,45 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
+#----------------------------------------------------------------------------------------
+
+@app.get("/") #Just great return 
 def read_root():
     return {"message": "Hello from your FastAPI server!"}
 
-@app.get("/test_post/")
-# def receive_message(sender: str, content: str):
-def receive_message():
-    return {
-        "status": "Received",
-        "from": "sender",
-        "content": "content",
-        "Version": 2
-    }
+#----------------------------------------------------------------------------------------
 
-@app.post("/set_schedule/") #User Orginal Scedule 
-async def add_schedule(request: Request):
-    body = await request.json()
-    name = body.get("name")
-    schedule = body.get("schedule")
-    return {"status": "Schedule saved", "user": name, "schedule": schedule}
+@app.get("/test_post/")#Test endpoint
+def receive_message():
+    return {"status": "Received"}
+
+#----------------------------------------------------------------------------------------
 
 @app.post("/save", response_class=PlainTextResponse)
 async def save_user(request: Request):
-    # Expecting plain text body like: "Study at 10:00am"
     schedule_text = (await request.body()).decode("utf-8")
-
-    # Save to Firestore under a static user (or customize this)
-    db.collection("Guardian").document("USERS").set({
-        "name": "Christopher",
-        "schedule": schedule_text
-    })
-
+    db.collection("Guardian").document("USERS").set({"name": "Christopher","schedule": schedule_text})
     return f"Schedule saved: {schedule_text}"
 
-# @app.post("/read", response_class=PlainTextResponse)
-@app.post("/read",response_class=JSONResponse)
+#----------------------------------------------------------------------------------------
+
+@app.post("/read", response_class=PlainTextResponse)
 async def read_user(request: Request):
-    # Step 1: Get plain text name
+    # Step 1: Get plain text name (not used here but retained in case you want to use dynamic users later)
     name = (await request.body()).decode("utf-8")
 
-    # Step 2: Look up that document in Firestore
-    # doc_ref = db.collection("Guardian").document("USERS")
-    doc_ref = db.collection("Users").document("Christopher")
+    # Step 2: Reference the School document under Activities subcollection
+    doc_ref = db.collection("Users").document("Christopher").collection("Activities").document("School")
     doc = doc_ref.get()
 
-    # Step 3: If found, return just the schedule as plain text
+    # Step 3: Return the class times if they exist
     if doc.exists:
         data = doc.to_dict()
-        # return data.get("schedule", "No schedule found in doc.")
-        return data
+        return data.get("Class Times", "No class times found.")
     else:
         return f"Schedule not found for {name}"
+
+#----------------------------------------------------------------------------------------
 
 @app.post("/upload-image")
 async def upload_image(file: UploadFile = File(...)):
@@ -100,6 +87,8 @@ async def upload_image(file: UploadFile = File(...)):
 
     return {"status": "success", "filename": file.filename, "size_bytes": len(stored_image)}
 
+#----------------------------------------------------------------------------------------
+
 def read_schedule():
     global stored_image
 
@@ -114,7 +103,6 @@ def read_schedule():
         Analyze this image and extract the user's weekly schedule, ignoring dates as everything is recurring weekly. 
         Format it as a Json where each day is an object with a list of activities that include start and end times.
         """
-
 
         # Send image + prompt
         response = model.generate_content([prompt, image])
@@ -136,3 +124,5 @@ def read_schedule():
 def view_schedule():
     result = read_schedule()
     return result
+
+#----------------------------------------------------------------------------------------
