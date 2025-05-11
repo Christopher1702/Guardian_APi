@@ -56,15 +56,12 @@ async def save_user(request: Request):
 
 @app.post("/read", response_class=PlainTextResponse)
 async def read_user(request: Request):
-    # Step 1: Get plain text name (not used here but retained in case you want to use dynamic users later)
-    name = (await request.body()).decode("utf-8")
+    name = (await request.body()).decode("utf-8") #Expect Plain Text
 
-    # Step 2: Reference the School document under Activities subcollection
-    doc_ref = db.collection("Users").document("Christopher").collection("Activities").document("School")
+    doc_ref = db.collection("Users").document("Christopher").collection("Activities").document("School") #Reference the School document under Activities subcollection
     doc = doc_ref.get()
 
-    # Step 3: Return the class times if they exist
-    if doc.exists:
+    if doc.exists: #Return the class times if they exist
         data = doc.to_dict()
         return data.get("Class Times", "No class times found.")
     else:
@@ -72,57 +69,80 @@ async def read_user(request: Request):
 
 #----------------------------------------------------------------------------------------
 
-@app.post("/upload-image")
+@app.post("/upload-image")  # Receive file and convert & store to PIL image
 async def upload_image(file: UploadFile = File(...)):
     global stored_image
-
     if not file.content_type.startswith("image/"):
         return JSONResponse(status_code=400, content={"error": "Invalid file type"})
-
-    # Read image content into memory (bytes)
-    stored_image = await file.read()
-
-    # Optionally log metadata
-    print(f"Received image: {file.filename} ({file.content_type}), size: {len(stored_image)} bytes")
-
-    return {"status": "success", "filename": file.filename, "size_bytes": len(stored_image)}
-
-#----------------------------------------------------------------------------------------
-
-def read_schedule():
-    global stored_image
-
+    
+    stored_image = await file.read()  # Read image content into memory (bytes)
     if stored_image is None:
         return {"error": "No image uploaded yet."}
 
     try:
-        # Convert bytes to PIL Image
-        image = Image.open(io.BytesIO(stored_image))
-
+        image = Image.open(io.BytesIO(stored_image))  # Convert bytes to PIL Image
         prompt = """
-        Analyze this image and extract the user's weekly schedule, ignoring dates as everything is recurring weekly. 
-        Format it as a Json where each day is an object with a list of activities that include start and end times.
+        Analyze this image and extract the user's weekly schedule, ignoring dates.
+        Format it as a Json.
         """
-
-        # Send image + prompt
-        response = model.generate_content([prompt, image])
-
-        # DEBUG: show the raw text for dev logging
-        print("Gemini response:\n", response.text)
-
+        response = model.generate_content([prompt, image])  # Send image + prompt
+        print("Gemini response:\n", response.text)  # DEBUG: show raw response
         if not response.text.strip():
             return {"error": "Gemini returned an empty response."}
 
-        # Return raw text instead of parsing
-        return {"response": response.text}
+        school_ref = db.collection("Users").document("Christopher").collection("Activities").document("School") # Store the response in Firestore under Class Times
+        school_ref.set({"Class Times": response.text.strip()}, merge=True)
+
+        # Optionally log metadata
+        print(f"Received image: {file.filename} ({file.content_type}), size: {len(stored_image)} bytes")
+
+        return {
+            "status": "success",
+            "filename": file.filename,
+            "size_bytes": len(stored_image),
+            "stored_to": "Users/Christopher/Activities/School/Class Times"
+        }
 
     except Exception as e:
         print("Failed to process schedule:", e)
         return {"error": "Schedule reading failed"}
 
-@app.get("/view")
-def view_schedule():
-    result = read_schedule()
-    return result
+#----------------------------------------------------------------------------------------
+
+# def read_schedule():#Feeds user image to Gemini and send back json format
+#     global stored_image
+
+#     if stored_image is None:
+#         return {"error": "No image uploaded yet."}
+
+#     try:
+#         # Convert bytes to PIL Image
+#         image = Image.open(io.BytesIO(stored_image))
+
+#         prompt = """
+#         Analyze this image and extract the user's weekly schedule, ignoring dates. 
+#         Format it as a Json.
+#         """
+
+#         # Send image + prompt
+#         response = model.generate_content([prompt, image])
+
+#         # DEBUG: show the raw text for dev logging
+#         print("Gemini response:\n", response.text)
+
+#         if not response.text.strip():
+#             return {"error": "Gemini returned an empty response."}
+
+#         # Return raw text instead of parsing
+#         return {"response": response.text}
+
+#     except Exception as e:
+#         print("Failed to process schedule:", e)
+#         return {"error": "Schedule reading failed"}
+
+# @app.get("/view")
+# def view_schedule():
+#     result = read_schedule()
+#     return result
 
 #----------------------------------------------------------------------------------------
