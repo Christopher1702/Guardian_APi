@@ -83,7 +83,6 @@ async def upload_image(file: UploadFile = File(...)):
         image = Image.open(io.BytesIO(stored_image))  # Convert bytes to PIL Image
         prompt = """
         Analyze this image and extract the user's weekly schedule, ignoring dates.
-        Format it as a Json.
         """
         response = model.generate_content([prompt, image])  # Send image + prompt
         print("Gemini response:\n", response.text)  # DEBUG: show raw response
