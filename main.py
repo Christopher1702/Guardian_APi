@@ -49,8 +49,17 @@ def receive_message():
 @app.post("/save", response_class=PlainTextResponse)
 async def save_user(request: Request):
     schedule_text = (await request.body()).decode("utf-8")
-    db.collection("Users").document("Christopher").collection("Activities").document("School").set({"name": "Christopher", "schedule": schedule_text},merge=True)
-    return f"Schedule saved: {schedule_text}"
+
+    doc_ref = db.collection("Users").document("Christopher").collection("Activities").document("School")
+    doc = doc_ref.get()
+    data = doc.to_dict()
+
+    prompt = f"""This is database of user information {data}, {schedule_text}"""
+
+    response = model.generate_content(prompt)
+
+    db.collection("Users").document("Christopher").collection("Activities").document("School").set({"name": "Christopher", "schedule": response})
+    return f"Schedule saved: Changes made successfully"
 
 #----------------------------------------------------------------------------------------
 
@@ -90,7 +99,7 @@ async def upload_image(file: UploadFile = File(...)):
             return {"error": "Gemini returned an empty response."}
 
         school_ref = db.collection("Users").document("Christopher").collection("Activities").document("School") # Store the response in Firestore under Class Times
-        school_ref.set({"Class Times": response.text.strip()}, merge=True)
+        school_ref.set({"Class Times": response.text}, merge=True)
 
         # Optionally log metadata
         print(f"Received image: {file.filename} ({file.content_type}), size: {len(stored_image)} bytes")
