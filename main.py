@@ -55,7 +55,11 @@ async def save_user(request: Request):
 
     data = doc.to_dict() if doc.exists else {}
 
-    prompt = f"""This is database of user information {data}, {schedule_text}"""
+    prompt = f"""This is database of user information {data}, {schedule_text}.
+        1. No extra comments (just return the schedule)
+        2. NO BOLD FONTS or excessive spacing
+        3. Just make the change ONLY
+      """
     response = model.generate_content(prompt)
 
     doc_ref.set({
@@ -96,7 +100,7 @@ async def upload_image(file: UploadFile = File(...)):
         prompt = """
         Create a schedule from this.
         1. No extra comments (just return the schedule)
-        2. NO BOLD FONTS or excessive spacing)
+        2. NO BOLD FONTS or excessive spacing
         3. Organized format (start-end) (mention day of week once)
         4. Don't add unnecessary times slots that are empty 
         5. DONT include dates
