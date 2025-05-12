@@ -59,8 +59,7 @@ async def save_user(request: Request):
     response = model.generate_content(prompt)
 
     doc_ref.set({
-        "name": "Christopher",
-        "schedule": response.text
+        "Class Times": response.text
     })
 
     return "Schedule saved: Changes made successfully"
