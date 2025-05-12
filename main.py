@@ -49,7 +49,7 @@ def receive_message():
 @app.post("/save", response_class=PlainTextResponse)
 async def save_user(request: Request):
     schedule_text = (await request.body()).decode("utf-8")
-    db.collection("Guardian").document("USERS").set({"name": "Christopher","schedule": schedule_text})
+    db.collection("Users").document("Christopher").collection("Activities").document("School").set({"name": "Christopher", "schedule": schedule_text},merge=True)
     return f"Schedule saved: {schedule_text}"
 
 #----------------------------------------------------------------------------------------
@@ -105,43 +105,5 @@ async def upload_image(file: UploadFile = File(...)):
     except Exception as e:
         print("Failed to process schedule:", e)
         return {"error": "Schedule reading failed"}
-
-#----------------------------------------------------------------------------------------
-
-# def read_schedule():#Feeds user image to Gemini and send back json format
-#     global stored_image
-
-#     if stored_image is None:
-#         return {"error": "No image uploaded yet."}
-
-#     try:
-#         # Convert bytes to PIL Image
-#         image = Image.open(io.BytesIO(stored_image))
-
-#         prompt = """
-#         Analyze this image and extract the user's weekly schedule, ignoring dates. 
-#         Format it as a Json.
-#         """
-
-#         # Send image + prompt
-#         response = model.generate_content([prompt, image])
-
-#         # DEBUG: show the raw text for dev logging
-#         print("Gemini response:\n", response.text)
-
-#         if not response.text.strip():
-#             return {"error": "Gemini returned an empty response."}
-
-#         # Return raw text instead of parsing
-#         return {"response": response.text}
-
-#     except Exception as e:
-#         print("Failed to process schedule:", e)
-#         return {"error": "Schedule reading failed"}
-
-# @app.get("/view")
-# def view_schedule():
-#     result = read_schedule()
-#     return result
 
 #----------------------------------------------------------------------------------------
