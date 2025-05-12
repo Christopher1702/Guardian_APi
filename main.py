@@ -97,7 +97,7 @@ async def upload_image(file: UploadFile = File(...)):
         Create a schedule from this.
         1. No extra comments (just return the schedule)
         2. NO BOLD FONTS or excessive spacing)
-        3. Organized format (start-end)
+        3. Organized format (start-end) (mention day of week once)
         4. Don't add unnecessary times slots that are empty 
         5. DONT include dates
         """
