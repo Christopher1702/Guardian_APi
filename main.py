@@ -52,14 +52,18 @@ async def save_user(request: Request):
 
     doc_ref = db.collection("Users").document("Christopher").collection("Activities").document("School")
     doc = doc_ref.get()
-    data = doc.to_dict()
+
+    data = doc.to_dict() if doc.exists else {}
 
     prompt = f"""This is database of user information {data}, {schedule_text}"""
-
     response = model.generate_content(prompt)
 
-    db.collection("Users").document("Christopher").collection("Activities").document("School").set({"name": "Christopher", "schedule": response})
-    return f"Schedule saved: Changes made successfully"
+    doc_ref.set({
+        "name": "Christopher",
+        "schedule": response.text
+    })
+
+    return "Schedule saved: Changes made successfully"
 
 #----------------------------------------------------------------------------------------
 
