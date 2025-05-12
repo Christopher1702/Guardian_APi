@@ -46,7 +46,7 @@ def receive_message():
 
 #----------------------------------------------------------------------------------------
 
-@app.post("/save", response_class=PlainTextResponse)
+@app.post("/save", response_class=PlainTextResponse)#Talk to Ai in School Feature
 async def save_user(request: Request):
     schedule_text = (await request.body()).decode("utf-8")
 
@@ -94,7 +94,11 @@ async def upload_image(file: UploadFile = File(...)):
     try:
         image = Image.open(io.BytesIO(stored_image))  # Convert bytes to PIL Image
         prompt = """
-        Analyze this image and extract the user's weekly schedule, ignoring dates.
+        Create a schedule from this.
+        1. No extra comments (just return the schedule)
+        2. NO BOLD FONTS or excessive spacing)
+        3. neat minimalistic format (start-end)
+        4. Don't add unnecessary times slots that are empty 
         """
         response = model.generate_content([prompt, image])  # Send image + prompt
         print("Gemini response:\n", response.text)  # DEBUG: show raw response
