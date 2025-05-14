@@ -59,6 +59,7 @@ async def save_user(request: Request):
         1. No extra comments (just return the schedule)
         2. NO BOLD FONTS or excessive spacing
         3. Just make the change ONLY
+        4. Format in text NOT JSON
       """
     response = model.generate_content(prompt)
 
