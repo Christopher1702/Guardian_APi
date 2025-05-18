@@ -101,7 +101,16 @@ async def upload_image(file: UploadFile = File(...)):
         image = Image.open(io.BytesIO(stored_image))  # Convert bytes to PIL Image
         prompt = """
         Extract the user's weekly class schedule from this image.
+        Return ONLY a JSON object like this:
 
+        {
+            "Monday": [
+             { 
+                "Time": "08:00-10:00",
+                "event": "MSE 311"
+             }
+            ]
+        }
         Rules:
         - Use 24-hour time format.
         - If day is empty, populate with "Free day :)".
@@ -113,17 +122,17 @@ async def upload_image(file: UploadFile = File(...)):
         if not response.text.strip():
             return {"error": "Gemini returned an empty response."}
         
-        # try:
-        #     schedule_dict = json.loads(response.text)
-        # except json.JSONDecodeError:
-        #     return {"error": "Gemini returned invalid JSON", "raw": response.text}
+        try:
+            schedule_dict = json.loads(response.text)
+        except json.JSONDecodeError:
+            return {"error": "Gemini returned invalid JSON", "raw": response.text}
         
-        # monday_data = schedule_dict.get("Monday", [])
+        monday_data = schedule_dict.get("Monday", [])
 
         doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday") # Reference to: Users -> Christopher -> Schedule -> Monday
 
         doc_ref.set({
-            "item": response.text
+            "item": monday_data
         })
 
         print(f"Received image: {file.filename} ({file.content_type}), size: {len(stored_image)} bytes") # Optionally log metadata
