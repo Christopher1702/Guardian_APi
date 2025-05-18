@@ -112,7 +112,7 @@ async def upload_image(file: UploadFile = File(...)):
         if not response.text.strip():
             return {"error": "Gemini returned an empty response."}
         
-        monday_data = model.generate_content(["return monday time and event only", response.text]) 
+        monday_data = model.generate_content(f"return monday time and event only, {response.text}") 
 
         # monday_text = monday_data.text.strip()
 
