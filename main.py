@@ -63,6 +63,7 @@ async def save_user(request: Request):
       """
     response = model.generate_content(prompt)
 
+
     doc_ref.set({
         "Class Times": response.text
     })
@@ -89,39 +90,49 @@ async def read_user(request: Request):
 @app.post("/upload-image")  # Receive file and convert & store to PIL image
 async def upload_image(file: UploadFile = File(...)):
     global stored_image
-    if not file.content_type.startswith("image/"):
+    if not file.content_type.startswith("image/"): #If File doesnt exisit
         return JSONResponse(status_code=400, content={"error": "Invalid file type"})
     
     stored_image = await file.read()  # Read image content into memory (bytes)
-    if stored_image is None:
+    if stored_image is None: #if nothing was received 
         return {"error": "No image uploaded yet."}
 
     try:
         image = Image.open(io.BytesIO(stored_image))  # Convert bytes to PIL Image
         prompt = """
-        Create a schedule from this.
-        1. No extra comments (just return the schedule)
-        2. NO BOLD FONTS or excessive spacing
-        3. Organized format (start-end) (mention day of week once)
-        4. Don't add unnecessary times slots that are empty 
-        5. DONT include dates
+        Extract the user's weekly class schedule from this image.
+
+        Rules:
+        - Use 24-hour time format.
+        - If day is empty, populate with "Free day :)".
+        - No extra commentary - JUST SHOW RESULTS
+        - No Bold fonts or markdown.
         """
         response = model.generate_content([prompt, image])  # Send image + prompt
-        print("Gemini response:\n", response.text)  # DEBUG: show raw response
+
         if not response.text.strip():
             return {"error": "Gemini returned an empty response."}
+        
+        # try:
+        #     schedule_dict = json.loads(response.text)
+        # except json.JSONDecodeError:
+        #     return {"error": "Gemini returned invalid JSON", "raw": response.text}
+        
+        # monday_data = schedule_dict.get("Monday", [])
 
-        school_ref = db.collection("Users").document("Christopher").collection("Activities").document("School") # Store the response in Firestore under Class Times
-        school_ref.set({"Class Times": response.text}, merge=True)
+        doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday") # Reference to: Users -> Christopher -> Schedule -> Monday
 
-        # Optionally log metadata
-        print(f"Received image: {file.filename} ({file.content_type}), size: {len(stored_image)} bytes")
+        doc_ref.set({
+            "item": response.text
+        })
+
+        print(f"Received image: {file.filename} ({file.content_type}), size: {len(stored_image)} bytes") # Optionally log metadata
 
         return {
             "status": "success",
             "filename": file.filename,
             "size_bytes": len(stored_image),
-            "stored_to": "Users/Christopher/Activities/School/Class Times"
+            "stored_to": "Users/Christopher/Schedule/Monday"
         }
 
     except Exception as e:
