@@ -74,14 +74,14 @@ async def save_user(request: Request):
 
 @app.post("/read", response_class=PlainTextResponse)
 async def read_user(request: Request):
-    name = (await request.body()).decode("utf-8") #Expect Plain Text
+    name = (await request.body()).decode("utf-8")  # Expect plain text name like "Christopher"
 
-    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday") #Reference the School document under Activities subcollection
+    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
     doc = doc_ref.get()
 
-    if doc.exists: #Return the class times if they exist
+    if doc.exists:
         data = doc.to_dict()
-        return data.get("Class Times", "No class times found.")
+        return data.get("Schedule", "No class times found.")
     else:
         return f"Schedule not found for {name}"
 
