@@ -76,7 +76,7 @@ async def save_user(request: Request):
 async def read_user(request: Request):
     name = (await request.body()).decode("utf-8") #Expect Plain Text
 
-    doc_ref = db.collection("Users").document("Christopher").collection("Activities").document("School") #Reference the School document under Activities subcollection
+    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday") #Reference the School document under Activities subcollection
     doc = doc_ref.get()
 
     if doc.exists: #Return the class times if they exist
@@ -112,14 +112,14 @@ async def upload_image(file: UploadFile = File(...)):
         if not response.text.strip():
             return {"error": "Gemini returned an empty response."}
         
-        monday_data = model.generate_content(f"return monday time and event only, {response.text}") 
+        # monday_data = model.generate_content(f"return monday time and event only, {response.text}") 
 
         # monday_text = monday_data.text.strip()
 
         doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday") # Reference to: Users -> Christopher -> Schedule -> Monday
 
         doc_ref.set({
-            "Monday": monday_data
+            "Schedule": response.text
         })
 
         print(f"Received image: {file.filename} ({file.content_type}), size: {len(stored_image)} bytes") # Optionally log metadata
