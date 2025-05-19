@@ -112,14 +112,14 @@ async def upload_image(file: UploadFile = File(...)):
         if not response.text.strip():
             return {"error": "Gemini returned an empty response."}
         
-        # monday_data = model.generate_content(f"return monday time and event only, {response.text}") 
+        monday_data = model.generate_content(f"return monday time and event only, {response.text}") 
 
         # monday_text = monday_data.text.strip()
 
         doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday") # Reference to: Users -> Christopher -> Schedule -> Monday
 
         doc_ref.set({
-            "Schedule": response.text
+            "Schedule": monday_data.text
         })
 
         print(f"Received image: {file.filename} ({file.content_type}), size: {len(stored_image)} bytes") # Optionally log metadata
