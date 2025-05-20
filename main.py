@@ -75,7 +75,8 @@ async def save_user(request: Request):
 @app.post("/read", response_class=PlainTextResponse)
 async def read_user(request: Request):
     name = (await request.body()).decode("utf-8")  # Expect plain text name like "Christopher"
-
+    print(name)
+ 
     doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document('Monday')
     doc = doc_ref.get()
 
