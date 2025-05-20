@@ -76,7 +76,7 @@ async def save_user(request: Request):
 async def read_user(request: Request):
     name = (await request.body()).decode("utf-8")  # Expect plain text name like "Christopher"
 
-    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
+    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document(request.body)
     doc = doc_ref.get()
 
     if doc.exists:
