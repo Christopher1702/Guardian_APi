@@ -77,7 +77,7 @@ async def read_user(request: Request):
     name = (await request.body()).decode("utf-8")  # Expect plain text name like "Christopher"
     print(name)
  
-    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document('Monday')
+    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document(name)
     doc = doc_ref.get()
 
     if doc.exists:
