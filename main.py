@@ -51,7 +51,7 @@ from fastapi.responses import PlainTextResponse
 
 @app.post("/save", response_class=PlainTextResponse)
 async def save_user(request: Request):
-    schedule_text = (await request.body()).decode("utf-8")
+    user_request = (await request.body()).decode("utf-8")
 
     days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     week_data = {}
@@ -68,7 +68,7 @@ async def save_user(request: Request):
     # Step 2: Send to model for processing
     prompt = f"""This is the database of user information: {week_data}
 
-            New input: {schedule_text}
+            New input: {user_request}
 
             Instructions:
             1. No extra comments (just return the updated schedule).
@@ -80,13 +80,13 @@ async def save_user(request: Request):
     response = model.generate_content(prompt)
 
     # Step 3: Detect which day is being updated (simple keyword match)
-    updated_day = next((day for day in days if day.lower() in schedule_text.lower()), None)
+    updated_day = next((day for day in days if day.lower() in user_request.lower()), None)
     if not updated_day:
         return "Could not identify which day to update. Please include a day name in the schedule."
 
     # Step 4: Save to Firestore under the correct day
     target_ref = db.collection("Users").document("Christopher").collection("Schedule").document(updated_day)
-    target_ref.set({ "Class Times": response.text })
+    target_ref.set({ "Schedule": response.text })
 
     return f"Schedule saved: {updated_day} updated successfully"
 
