@@ -46,31 +46,50 @@ def receive_message():
 
 #----------------------------------------------------------------------------------------
 
-@app.post("/save", response_class=PlainTextResponse)#Talk to Ai in School Feature
+from fastapi import Request
+from fastapi.responses import PlainTextResponse
+
+@app.post("/save", response_class=PlainTextResponse)
 async def save_user(request: Request):
     schedule_text = (await request.body()).decode("utf-8")
 
-    doc_ref = db.collection("Users").document("Christopher").collection("Activities").document("School")
-    doc = doc_ref.get()
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    week_data = {}
 
-    data = doc.to_dict() if doc.exists else {}
+    # Step 1: Gather existing schedule for all 7 days
+    for day in days:
+        day_ref = db.collection("Users").document("Christopher").collection("Schedule").document(day)
+        doc = day_ref.get()
+        if doc.exists:
+            week_data[day] = doc.to_dict()
+        else:
+            week_data[day] = {}
 
-    prompt = f"""This is database of user information {data}, {schedule_text}.
-        1. No extra comments (just return the schedule)
-        2. NO BOLD FONTS or excessive spacing
-        3. Just make the change ONLY
-        4. Format in text NOT JSON
-      """
+    # Step 2: Send to model for processing
+    prompt = f"""This is the database of user information: {week_data}
+
+            New input: {schedule_text}
+
+            Instructions:
+            1. No extra comments (just return the updated schedule).
+            2. No BOLD FONTS or excessive spacing.
+            3. Just make the change ONLY.
+            4. Format in plain text NOT JSON.
+            """
+
     response = model.generate_content(prompt)
 
+    # Step 3: Detect which day is being updated (simple keyword match)
+    updated_day = next((day for day in days if day.lower() in schedule_text.lower()), None)
+    if not updated_day:
+        return "Could not identify which day to update. Please include a day name in the schedule."
 
-    doc_ref.set({
-        "Class Times": response.text
-    })
+    # Step 4: Save to Firestore under the correct day
+    target_ref = db.collection("Users").document("Christopher").collection("Schedule").document(updated_day)
+    target_ref.set({ "Class Times": response.text })
 
-    return "Schedule saved: Changes made successfully"
+    return f"Schedule saved: {updated_day} updated successfully"
 
-#----------------------------------------------------------------------------------------
 
 @app.post("/read", response_class=PlainTextResponse)
 async def read_user(request: Request):
