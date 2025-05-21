@@ -112,13 +112,15 @@ async def upload_image(file: UploadFile = File(...)):
         if not response.text.strip():
             return {"error": "Gemini returned an empty response."}
         
-        monday_data = model.generate_content(f"return monday time and event only (dont include day), {response.text}") 
-        tues_data = model.generate_content(f"return tuesday time and event only (dont include day), {response.text}")
-        wed_data = model.generate_content(f"return wednesday time and event only (dont include day), {response.text}")
-        thu_data = model.generate_content(f"return thursday time and event only (dont include day), {response.text}")
-        fri_data = model.generate_content(f"return friday time and event only (dont include day), {response.text}")
+        rules = """Dont include the day of the week heading!!!"""
+        
+        monday_data = model.generate_content(f"return monday time and event only, {rules}, {response.text}") 
+        tues_data = model.generate_content(f"return tuesday time and event only, {rules}, {response.text}")
+        wed_data = model.generate_content(f"return wednesday time and event only, {rules}, {response.text}")
+        thu_data = model.generate_content(f"return thursday time and event only, {rules}, {response.text}")
+        fri_data = model.generate_content(f"return friday time and event only, {rules}, {response.text}")
 
-        mon_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday") # Reference to: Users -> Christopher -> Schedule -> Monday
+        mon_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
         tues_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Tuesday")
         wed_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Wednesday")
         thu_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Thursday")
