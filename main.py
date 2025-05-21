@@ -75,9 +75,8 @@ async def save_user(request: Request):
 @app.post("/read", response_class=PlainTextResponse)
 async def read_user(request: Request):
     name = (await request.body()).decode("utf-8")  # Expect plain text name like "Christopher"
-    print(name)
- 
-    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document(name)
+
+    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document(request.body)
     doc = doc_ref.get()
 
     if doc.exists:
@@ -116,14 +115,20 @@ async def upload_image(file: UploadFile = File(...)):
         monday_data = model.generate_content(f"return monday time and event only (dont include day), {response.text}") 
         tues_data = model.generate_content(f"return tuesday time and event only (dont include day), {response.text}")
         wed_data = model.generate_content(f"return wednesday time and event only (dont include day), {response.text}")
+        thu_data = model.generate_content(f"return thursday time and event only (dont include day), {response.text}")
+        fri_data = model.generate_content(f"return friday time and event only (dont include day), {response.text}")
 
         mon_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday") # Reference to: Users -> Christopher -> Schedule -> Monday
         tues_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Tuesday")
         wed_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Wednesday")
+        thu_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Thursday")
+        fri_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Friday")
         
         mon_ref.set({"Schedule": monday_data.text})
         tues_ref.set({"Schedule": tues_data.text})
         wed_ref.set({"Schedule": wed_data.text})
+        thu_ref.set({"Schedule": thu_data.text})
+        fri_ref.set({"Schedule": fri_data.text})
 
         print(f"Received image: {file.filename} ({file.content_type}), size: {len(stored_image)} bytes") # Optionally log metadata
 
