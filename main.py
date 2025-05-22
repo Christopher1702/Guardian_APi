@@ -56,39 +56,46 @@ async def save_user(request: Request):
     days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     week_data = {}
 
-    # Step 1: Gather existing schedule for all 7 days
+    # Step 1: Gather existing schedule from Firestore
     for day in days:
-        day_ref = db.collection("Users").document("Christopher").collection("Schedule").document(day)
-        doc = day_ref.get()
+        doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document(day)
+        doc = doc_ref.get()
         if doc.exists:
             week_data[day] = doc.to_dict()
         else:
             week_data[day] = {}
 
-    # Step 2: Send to model for processing
-    prompt = f"""This is the database of user information: {week_data}
+    # Step 2: Ask Gemini to make the update
+    prompt = f"""
+This is the user's weekly schedule:
 
-            New input: {user_request}
+{week_data}
 
-            Instructions:
-            1. No extra comments (just return the updated schedule).
-            2. No BOLD FONTS or excessive spacing.
-            3. Just make the change ONLY.
-            4. Format in plain text NOT JSON.
-            """
+The user input is:
+"{user_request}"
+
+Instructions for you, Gemini:
+- Interpret the user's request and update the schedule accordingly.
+- DO NOT return the entire week.
+- ONLY return the updated schedule text for the ONE DAY that changed.
+- DO NOT include any extra commentary, markdown, formatting, or labels.
+- Just return the plain text schedule for that day.
+    """.strip()
 
     response = model.generate_content(prompt)
 
-    # Step 3: Detect which day is being updated (simple keyword match)
+    # Step 3: Identify which day the user is referring to
     updated_day = next((day for day in days if day.lower() in user_request.lower()), None)
+
     if not updated_day:
-        return "Could not identify which day to update. Please include a day name in the schedule."
+        return "Error: Could not identify a day to update. Please include the day name in your request."
 
-    # Step 4: Save to Firestore under the correct day
+    # Step 4: Save ONLY that day's response to Firestore
     target_ref = db.collection("Users").document("Christopher").collection("Schedule").document(updated_day)
-    target_ref.set({ "Schedule": response.text })
+    target_ref.set({ "Schedule": response.text.strip() })
 
-    return f"Schedule saved: {updated_day} updated successfully"
+    return f"Schedule updated successfully: {updated_day}"
+
 
 
 @app.post("/read", response_class=PlainTextResponse)
