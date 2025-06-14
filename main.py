@@ -12,6 +12,7 @@ from PIL import Image
 import io
 
 #----------------------------------------------------------------------------------------
+
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 model = genai.GenerativeModel('gemini-2.0-flash')
 load_dotenv()
@@ -21,7 +22,8 @@ firebase_admin.initialize_app(cred)
 db = firestore.client()
 app = FastAPI()
 stored_image: Optional[bytes] = None # This will hold the image content in memory
-#----------------------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
  # Allow all origins (good for testing, not for production!)
 app.add_middleware(
@@ -32,22 +34,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#----------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @app.get("/") #Just great return 
 def read_root():
     return {"message": "Hello from your FastAPI server!"}
 
-#----------------------------------------------------------------------------------------
-
-@app.get("/test_post/")#Test endpoint
-def receive_message():
-    return {"status": "Received"}
-
-#----------------------------------------------------------------------------------------
-
-from fastapi import Request
-from fastapi.responses import PlainTextResponse
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @app.post("/save", response_class=PlainTextResponse)
 async def save_user(request: Request):
@@ -96,7 +89,7 @@ Instructions for you, Gemini:
 
     return f"Schedule updated successfully: {updated_day}"
 
-
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @app.post("/read", response_class=PlainTextResponse)
 async def read_user(request: Request):
@@ -172,3 +165,16 @@ async def upload_image(file: UploadFile = File(...)):
         return {"error": "Schedule reading failed"}
 
 #----------------------------------------------------------------------------------------
+
+@app.post("/agenda", response_class=PlainTextResponse)
+async def read_user(request: Request):
+    name = (await request.body()).decode("utf-8").strip()  # E.g., "Monday", "Tuesday", etc.
+
+    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document(name)
+    doc = doc_ref.get()
+
+    if doc.exists:
+        data = doc.to_dict()
+        return data.get("Schedule", "No class times found.")
+    else:
+        return f"Schedule not found for {name}"
