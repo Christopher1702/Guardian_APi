@@ -195,12 +195,12 @@ async def save_user(request: Request):
 
     response = model.generate_content(prompt)
     target_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
-    target_ref.set({ "Meal": response.text.strip() })
+    target_ref.set({"Meal": response.text.strip()}, merge=True)
 
 
     image_link = model.generate_content(f"""find a image online based on this meal. ONLY SEND LINK TO IMAGE: {response}""")
     img_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
-    img_ref.set({ "Image_Link": image_link.text.strip() })
+    img_ref.set({"Image_Link": image_link.text.strip()}, merge=True)
 
 
     return f"Meal updated successfully: OK"
@@ -219,3 +219,5 @@ async def fetch_recipe():
         return "No recipe document found for Monday."
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
