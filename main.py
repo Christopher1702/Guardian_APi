@@ -194,12 +194,11 @@ async def save_user(request: Request):
     """.strip()
 
     response = model.generate_content(prompt)
-
-    image_link = model.generate_content(f"""find a image online based on this meal. ONLY SEND LINK TO IMAGE: {response}""")
-
     target_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
     target_ref.set({ "Meal": response.text.strip() })
 
+
+    image_link = model.generate_content(f"""find a image online based on this meal. ONLY SEND LINK TO IMAGE: {response}""")
     img_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
     img_ref.set({ "Image_Link": image_link.text.strip() })
 
