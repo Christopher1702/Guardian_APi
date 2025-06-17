@@ -178,3 +178,28 @@ async def read_user(request: Request):
         return data.get("Schedule", "No class times found.")
     else:
         return f"Schedule not found for {name}"
+    
+#----------------------------------------------------------------------------------------
+
+@app.post("/high_protein", response_class=PlainTextResponse)
+async def save_user(request: Request):
+    user_request = (await request.body()).decode("utf-8")
+
+    prompt = f"""
+        Give me a reciepe for a High Protein Meal
+
+        - ONLY return reciepe.
+        - I nedd to store this repsose so save text space.
+        - DO NOT include any extra commentary, markdown, formatting, or labels.
+        - Just return the plain text.
+    """.strip()
+
+    response = model.generate_content(prompt)
+
+    #ingredients = model.generate_content(response.txt)
+
+    target_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
+    target_ref.set({ "Meal": response.text.strip() })
+
+
+    return f"Meal updated successfully: OK"
