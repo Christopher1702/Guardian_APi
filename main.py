@@ -104,7 +104,7 @@ async def read_user(request: Request):
     else:
         return f"Schedule not found for {name}"
 
-#----------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @app.post("/upload-image")  # Receive file and convert & store to PIL image
 async def upload_image(file: UploadFile = File(...)):
@@ -164,7 +164,7 @@ async def upload_image(file: UploadFile = File(...)):
         print("Failed to process schedule:", e)
         return {"error": "Schedule reading failed"}
 
-#----------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @app.post("/agenda", response_class=PlainTextResponse)
 async def read_user(request: Request):
@@ -179,15 +179,14 @@ async def read_user(request: Request):
     else:
         return f"Schedule not found for {name}"
     
-#----------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @app.post("/high_protein", response_class=PlainTextResponse)
 async def save_user(request: Request):
     user_request = (await request.body()).decode("utf-8")
 
     prompt = f"""
-        Give me a reciepe for a High Protein Meal
-
+        {user_request}
         - ONLY return reciepe.
         - I nedd to store this repsose so save text space.
         - DO NOT include any extra commentary, markdown, formatting, or labels.
@@ -203,3 +202,18 @@ async def save_user(request: Request):
 
 
     return f"Meal updated successfully: OK"
+
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+@app.get("/fetch_recipe", response_class=PlainTextResponse)
+async def fetch_recipe():
+    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
+    doc = doc_ref.get()
+
+    if doc.exists:
+        data = doc.to_dict()
+        return data.get("Meal", "No meal recipe found.")
+    else:
+        return "No recipe document found for Monday."
+
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
