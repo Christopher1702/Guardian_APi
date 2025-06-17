@@ -195,10 +195,13 @@ async def save_user(request: Request):
 
     response = model.generate_content(prompt)
 
-    #ingredients = model.generate_content(response.txt)
+    image_link = model.generate_content(f"""genetate a image based on this meal. ONLY SEND LINK TO IMAGE: {response.txt}""")
 
     target_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
     target_ref.set({ "Meal": response.text.strip() })
+
+    img_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
+    img_ref.set({ "Image_Link": image_link.text.strip() })
 
 
     return f"Meal updated successfully: OK"
