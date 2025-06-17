@@ -207,18 +207,29 @@ async def save_user(request: Request):
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-@app.get("/fetch_recipe")
+@app.get("/fetch_recipe", response_class=PlainTextResponse)
 async def fetch_recipe():
     doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
     doc = doc_ref.get()
 
     if doc.exists:
         data = doc.to_dict()
-        meal = data.get("Meal", "No meal recipe found.")
-        image = data.get("Image_Link", "")
-        return JSONResponse(content={"meal": meal, "image_link": image})
+        return data.get("Meal", "No meal recipe found.")
     else:
-        return JSONResponse(content={"error": "No recipe document found for Monday."}, status_code=404)
+        return "No recipe document found for Monday."
+
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+@app.get("/fetch_image", response_class=PlainTextResponse)
+async def fetch_image():
+    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
+    doc = doc_ref.get()
+
+    if doc.exists:
+        data = doc.to_dict()
+        return data.get("Image_Link", "")
+    else:
+        return ""
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
