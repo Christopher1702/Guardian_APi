@@ -1,37 +1,69 @@
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
+  Image,
+  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { BASE_URL } from '../constants/api';
 
 export default function MealBuild() {
-  const [inputValue, setInputValue] = useState('');
-  const [imageUri, setImageUri] = useState<string | null>(null);
   const router = useRouter();
+  const [recipeText, setRecipeText] = useState('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
-  const handleSubmit = async () => {
-    if (!inputValue) return;
+  const fetchRecipeAndImage = async () => {
     try {
-      const response = await fetch(`${BASE_URL}/meal_build`, {
+      const recipeRes = await fetch(`${BASE_URL}/fetch_recipe`);
+      const recipeText = await recipeRes.text();
+      setRecipeText(recipeText);
+    } catch (error) {
+      console.error('Error fetching recipe:', error);
+      setRecipeText('Error loading recipe.');
+    }
+
+    try {
+      const imageRes = await fetch(`${BASE_URL}/fetch_image`);
+      const imageLink = await imageRes.text();
+      setImageUrl(imageLink || null);
+    } catch (error) {
+      console.error('Error fetching image:', error);
+      setImageUrl(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecipeAndImage();
+  }, []);
+
+  const handleHighProtein = async () => {
+    try {
+      await fetch(`${BASE_URL}/meal_build`, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
-        body: inputValue,
+        body: 'Find a high-protein meal recipe.',
       });
-      const result = await response.text();
-      console.log('Server response:', result);
-      setInputValue('');
+      fetchRecipeAndImage();
     } catch (error) {
-      console.error('Gemini lost connection', error);
+      console.error('High Protein request failed:', error);
+    }
+  };
+
+  const handleCalorieDeficit = async () => {
+    try {
+      await fetch(`${BASE_URL}/meal_build`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: 'Find a low-calorie meal recipe for a calorie deficit.',
+      });
+      fetchRecipeAndImage();
+    } catch (error) {
+      console.error('Calorie Deficit request failed:', error);
     }
   };
 
@@ -42,49 +74,45 @@ export default function MealBuild() {
       end={{ x: 0, y: 1 }}
       style={{ flex: 1 }}
     >
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.container}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-              <Text style={styles.backText}>← Back</Text>
-            </TouchableOpacity>
+      <ScrollView contentContainerStyle={styles.container}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backText}>← Back</Text>
+        </TouchableOpacity>
 
-            <View style={[styles.promptBox, { backgroundColor: '#ffffff' }]}>  
-              <Text style={[styles.prompt, { color: '#0F172A' }]}>Monday Meal Plan</Text>
-            </View>
+        <View style={[styles.promptBox, { backgroundColor: '#ffffff' }]}>
+          <Text style={[styles.prompt, { color: '#0F172A' }]}>Monday Meal Plan</Text>
+        </View>
 
-            <View style={styles.bottomContainer}>  
-              <View style={[styles.inputRow, { backgroundColor: '#ffffff' }]}> 
-                <TextInput
-                  style={[styles.input, { color: '#1E293B' }]} 
-                  placeholder="What do you feel hunrgy for?"
-                  placeholderTextColor="#94A3B8"
-                  value={inputValue}
-                  onChangeText={setInputValue}
-                />
+        <View style={styles.buttonRow}>
+          <TouchableOpacity style={styles.optionButton} onPress={handleHighProtein}>
+            <Ionicons name="barbell-outline" size={20} color="#14B8A6" />
+            <Text style={styles.optionText}>High Protein</Text>
+          </TouchableOpacity>
 
-                <TouchableOpacity onPress={handleSubmit} style={styles.arrowButton}>
-                  <Text style={[styles.arrow, { color: '#14B8A6' }]}>➤</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+          <TouchableOpacity style={styles.optionButton} onPress={handleCalorieDeficit}>
+            <Ionicons name="flame-outline" size={20} color="#14B8A6" />
+            <Text style={styles.optionText}>Calorie Deficit</Text>
+          </TouchableOpacity>
+        </View>
 
+        {recipeText !== '' && (
+          <View style={styles.recipeContainer}>
+            {imageUrl && (
+              <Image source={{ uri: imageUrl }} style={styles.recipeImage} />
+            )}
+            <Text style={styles.recipeText}>{recipeText}</Text>
           </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+        )}
+      </ScrollView>
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     paddingHorizontal: 24,
     paddingTop: 60,
-    justifyContent: 'flex-start',
+    paddingBottom: 80,
   },
   backButton: {
     position: 'absolute',
@@ -95,6 +123,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: '#ffffff',
     elevation: 4,
+    zIndex: 10,
   },
   backText: {
     fontSize: 16,
@@ -103,7 +132,7 @@ const styles = StyleSheet.create({
   },
   promptBox: {
     alignItems: 'center',
-    marginTop: '15%',
+    marginTop: '20%',
     padding: 16,
     borderRadius: 12,
     elevation: 6,
@@ -114,31 +143,46 @@ const styles = StyleSheet.create({
     fontFamily: 'System',
     textAlign: 'center',
   },
-  inputRow: {
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 30,
+    gap: 16,
+  },
+  optionButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
     borderRadius: 20,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    flex: 1,
     elevation: 5,
   },
-  input: {
-    flex: 1,
+  optionText: {
     fontSize: 16,
-    fontFamily: 'Helvetica Neue',
-    paddingRight: 10,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginLeft: 8,
   },
-  arrowButton: {
-    padding: 8,
+  recipeContainer: {
+    marginTop: 30,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    elevation: 4,
   },
-  arrow: {
-    fontSize: 20,
+  recipeImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: 12,
+    marginBottom: 12,
   },
-  bottomContainer: {
-    position: 'absolute',
-    bottom: 50,
-    left: 24,
-    right: 24,
+  recipeText: {
+    fontSize: 14,
+    color: '#334155',
+    lineHeight: 20,
   },
 });
 
