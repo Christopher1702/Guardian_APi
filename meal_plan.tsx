@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ImageBackground,
   Platform,
@@ -12,42 +12,70 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
-const meals = [
-  {
-    day: 'Monday',
-    title: 'Grilled Chicken Bowl',
-    image: 'https://your-link.com/chicken.jpg',
-  },
-  {
-    day: 'Tuesday',
-    title: 'Veggie Skewers & Rice',
-    image: 'https://your-link.com/skewers.jpg',
-  },
-  {
-    day: 'Wednesday',
-    title: 'Salmon Salad',
-    image: 'https://your-link.com/salmon.jpg',
-  },
-  {
-    day: 'Thursday',
-    title: 'Pasta Primavera',
-    image: 'https://your-link.com/pasta.jpg',
-  },
-  {
-    day: 'Friday',
-    title: 'Beef Stir‑Fry',
-    image: 'https://your-link.com/beef.jpg',
-  },
-  {
-    day: 'Saturday',
-    title: 'Veggie Tacos',
-    image: 'https://your-link.com/tacos.jpg',
-  },
-];
+import { BASE_URL } from '../constants/api';
 
 export default function MealPlan() {
   const router = useRouter();
+  const [mondayImage, setMondayImage] = useState('https://your-link.com/chicken.jpg'); // fallback
+  const [mondayTitle, setMondayTitle] = useState('Grilled Chicken Bowl');
+
+  useEffect(() => {
+    const fetchMondayData = async () => {
+      try {
+        const imageRes = await fetch(`${BASE_URL}/fetch_image`);
+        const imageLink = await imageRes.text();
+        if (imageLink) setMondayImage(imageLink);
+      } catch (err) {
+        console.error('Failed to load image:', err);
+      }
+
+      try {
+        const recipeRes = await fetch(`${BASE_URL}/fetch_recipe`);
+        const recipeText = await recipeRes.text();
+        if (recipeText) {
+          const trimmed = recipeText.split('\n')[0]; // Get first line as title
+          setMondayTitle(trimmed.slice(0, 60)); // trim for UI
+        }
+      } catch (err) {
+        console.error('Failed to load title:', err);
+      }
+    };
+
+    fetchMondayData();
+  }, []);
+
+  const meals = [
+    {
+      day: 'Monday',
+      title: mondayTitle,
+      image: mondayImage,
+    },
+    {
+      day: 'Tuesday',
+      title: 'Veggie Skewers & Rice',
+      image: 'https://your-link.com/skewers.jpg',
+    },
+    {
+      day: 'Wednesday',
+      title: 'Salmon Salad',
+      image: 'https://your-link.com/salmon.jpg',
+    },
+    {
+      day: 'Thursday',
+      title: 'Pasta Primavera',
+      image: 'https://your-link.com/pasta.jpg',
+    },
+    {
+      day: 'Friday',
+      title: 'Beef Stir‑Fry',
+      image: 'https://your-link.com/beef.jpg',
+    },
+    {
+      day: 'Saturday',
+      title: 'Veggie Tacos',
+      image: 'https://your-link.com/tacos.jpg',
+    },
+  ];
 
   return (
     <LinearGradient
@@ -57,10 +85,13 @@ export default function MealPlan() {
       style={styles.gradient}
     >
       <SafeAreaView style={styles.container}>
-        {/* Meal Cards */}
         <ScrollView contentContainerStyle={styles.scroll}>
           {meals.map((meal, index) => (
-            <TouchableOpacity key={index} style={styles.card} onPress={() => router.push('/meal_build')}>
+            <TouchableOpacity
+              key={index}
+              style={styles.card}
+              onPress={() => router.push('/meal_build')}
+            >
               <ImageBackground
                 source={{ uri: meal.image }}
                 style={styles.image}
@@ -75,11 +106,10 @@ export default function MealPlan() {
           ))}
         </ScrollView>
 
-        {/* Bottom Island Bar */}
         <View style={styles.bottomIsland}>
           <TouchableOpacity onPress={() => router.push('/')}>
-          <Ionicons name="home" size={24} color="#334155" />
-        </TouchableOpacity>
+            <Ionicons name="home" size={24} color="#334155" />
+          </TouchableOpacity>
 
           <TouchableOpacity>
             <Ionicons name="fast-food-outline" size={28} color="#14B8A6" />
@@ -103,7 +133,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingTop: 60,
-    paddingBottom: 140, // extra space for island bar
+    paddingBottom: 140,
     paddingHorizontal: 24,
   },
   card: {
