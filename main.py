@@ -190,9 +190,10 @@ async def save_user(request: Request):
 
         Instructions for you, Gemini:
         - Ill ask this many times - so change up meal completly each time
+        - DONT INCLUDE MEAL NAME
         - N0 FORMATTING
         - ONLY return reciepe.
-        - I nedd to store this repsose so save text space.
+        - I need to store this response so save text space.
         - DO NOT include any extra commentary, markdown, formatting, or labels.
         - Just return the plain text.
     """.strip()
@@ -201,18 +202,16 @@ async def save_user(request: Request):
     target_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
     target_ref.set({"Meal": response.text.strip()}, merge=True)
 
-    image_url_site = "https://unsplash.com/"
-    prompt_image = f"""
-                Use this site {image_url_site}
-                Find a image online based on this meal: {response}.
+    prompt_name = f"""
+                ONYL RETURN MEAL NAME: {response}.
 
                 Instructions for you, Gemini:
-                ONLY SEND LINK TO IMAGE
+                - ONLY SEND MEAL NAME, TO SAVE CHARACTER SPACE
                 """
 
-    image_link = model.generate_content()
-    img_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
-    img_ref.set({"Image_Link": image_link.text.strip()}, merge=True)
+    meal_name = model.generate_content(prompt_name)
+    name_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
+    name_ref.set({"Meal_Name": meal_name.text.strip()}, merge=True)
 
 
     return f"Meal updated successfully: OK"
