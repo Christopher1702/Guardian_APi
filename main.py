@@ -189,10 +189,8 @@ async def save_user(request: Request):
         {user_request}
 
         Instructions for you, Gemini:
-        - Ill ask this many times - so change up meal completly each time
-        - DONT INCLUDE MEAL NAME
         - N0 FORMATTING
-        - ONLY return reciepe.
+        - ONLY return FULL reciepe.
         - I need to store this response so save text space.
         - DO NOT include any extra commentary, markdown, formatting, or labels.
         - Just return the plain text.
