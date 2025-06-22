@@ -10,10 +10,13 @@ from dotenv import load_dotenv
 from typing import Optional
 from PIL import Image
 import io
+import requests
 
 #----------------------------------------------------------------------------------------
 
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+
+
 model = genai.GenerativeModel('gemini-2.0-flash')
 load_dotenv()
 cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
@@ -185,34 +188,51 @@ async def read_user(request: Request):
 async def save_user(request: Request):
     user_request = (await request.body()).decode("utf-8")
 
+    # Step 1: Generate the full recipe
     prompt = f"""
         {user_request}
 
         Instructions for you, Gemini:
-        - N0 FORMATTING
-        - ONLY return FULL reciepe.
-        - I need to store this response so save text space.
+        - Easy meals
+        - NO FORMATTING
+        - ONLY return FULL recipe.
         - DO NOT include any extra commentary, markdown, formatting, or labels.
         - Just return the plain text.
     """.strip()
 
     response = model.generate_content(prompt)
-    target_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
-    target_ref.set({"Meal": response.text.strip()}, merge=True)
+    recipe_text = response.text.strip()
 
-    prompt_name = f"""
-                ONYL RETURN MEAL NAME: {response}.
+    # Step 2: Save full recipe to Firestore
+    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
+    doc_ref.set({ "Meal": recipe_text }, merge=True)
 
-                Instructions for you, Gemini:
-                - ONLY SEND MEAL NAME, TO SAVE CHARACTER SPACE
-                """
+    # Step 3: Extract just the meal name
+    name_prompt = f"""
+        ONLY RETURN MEAL NAME: {response}.
+        Instructions for you, Gemini:
+        - ONLY send meal name.
+        - No intro, no format, just the meal name.
+    """
+    name_response = model.generate_content(name_prompt)
+    meal_name = name_response.text.strip()
+    doc_ref.set({ "Meal_Name": meal_name }, merge=True)
 
-    meal_name = model.generate_content(prompt_name)
-    name_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
-    name_ref.set({"Meal_Name": meal_name.text.strip()}, merge=True)
+    # Step 4: Search Pexels for an image
+    pexels_key = os.getenv("PEXELS_API_KEY")
+    headers = { "Authorization": pexels_key }
+    params = { "query": meal_name, "per_page": 1 }
 
+    res = requests.get("https://api.pexels.com/v1/search", headers=headers, params=params)
 
-    return f"Meal updated successfully: OK"
+    if res.status_code == 200:
+        try:
+            image_url = res.json()["photos"][0]["src"]["medium"]
+            doc_ref.set({ "Meal_Link": image_url }, merge=True)
+        except Exception as e:
+            print("Pexels image extract failed:", e)
+
+    return "Meal and image updated successfully: OK"
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
