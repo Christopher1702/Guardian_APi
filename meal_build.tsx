@@ -20,19 +20,15 @@ export default function MealBuild() {
   const fetchRecipeAndImage = async () => {
     try {
       const recipeRes = await fetch(`${BASE_URL}/fetch_recipe`);
-      const recipeText = await recipeRes.text();
-      setRecipeText(recipeText);
-    } catch (error) {
-      console.error('Error fetching recipe:', error);
-      setRecipeText('Error loading recipe.');
-    }
+      const recipe = await recipeRes.text();
+      setRecipeText(recipe);
 
-    try {
-      const imageRes = await fetch(`${BASE_URL}/fetch_image`);
+      const imageRes = await fetch(`${BASE_URL}/meal_img_link`);
       const imageLink = await imageRes.text();
       setImageUrl(imageLink || null);
     } catch (error) {
-      console.error('Error fetching image:', error);
+      console.error('Error fetching recipe or image:', error);
+      setRecipeText('Error loading recipe.');
       setImageUrl(null);
     }
   };
@@ -185,8 +181,3 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
-
-
-
-
-
