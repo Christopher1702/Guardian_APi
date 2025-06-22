@@ -229,14 +229,14 @@ async def fetch_recipe():
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-@app.get("/meal_name", response_class=PlainTextResponse)
+@app.get("/meal_img_link", response_class=PlainTextResponse)
 async def fetch_image():
     doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
     doc = doc_ref.get()
 
     if doc.exists:
         data = doc.to_dict()
-        return data.get("Meal_Name", "")
+        return data.get("Meal_Link", "")
     else:
         return ""
 
