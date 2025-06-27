@@ -17,7 +17,8 @@ import requests
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 
 
-model = genai.GenerativeModel('gemini-2.0-flash')
+# model = genai.GenerativeModel('gemini-2.0-flash')
+model = genai.GenerativeModel('gemini-2.5-pro')
 load_dotenv()
 cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
 cred = credentials.Certificate(cred_path)
@@ -39,7 +40,7 @@ app.add_middleware(
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-@app.get("/") #Just great return 
+@app.get("/") #SERVER STATE TEST
 def read_root():
     return {"message": "Hello from your FastAPI server!"}
 
@@ -93,12 +94,12 @@ Instructions for you, Gemini:
     return f"Schedule updated successfully: {updated_day}"
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+#DISPLAYS USER SCHEDULE
 @app.post("/read", response_class=PlainTextResponse)
 async def read_user(request: Request):
     name = (await request.body()).decode("utf-8")  # Expects Day
 
-    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document(name)
+    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection(name)
     doc = doc_ref.get()
 
     if doc.exists:
@@ -108,8 +109,8 @@ async def read_user(request: Request):
         return f"Schedule not found for {name}"
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-@app.post("/upload-image")  # Receive file and convert & store to PIL image
+#UPLOAD USER CLASS SCHDULE
+@app.post("/school_class_schedule")  # Receive file and convert & store to PIL image
 async def upload_image(file: UploadFile = File(...)):
     global stored_image
     if not file.content_type.startswith("image/"): #If File doesnt exisit
@@ -142,11 +143,11 @@ async def upload_image(file: UploadFile = File(...)):
         thu_data = model.generate_content(f"return thursday time and event only, {rules}, {response.text}")
         fri_data = model.generate_content(f"return friday time and event only, {rules}, {response.text}")
 
-        mon_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Monday")
-        tues_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Tuesday")
-        wed_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Wednesday")
-        thu_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Thursday")
-        fri_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Friday")
+        mon_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Monday")
+        tues_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Tuesday")
+        wed_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Wednesday")
+        thu_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Thursday")
+        fri_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Friday")
         
         mon_ref.set({"Schedule": monday_data.text})
         tues_ref.set({"Schedule": tues_data.text})
@@ -160,7 +161,7 @@ async def upload_image(file: UploadFile = File(...)):
             "status": "success",
             "filename": file.filename,
             "size_bytes": len(stored_image),
-            "stored_to": "Users/Christopher/Schedule/Monday"
+            "stored_to": "Users/Christopher/Schedule/Every_Week"
         }
 
     except Exception as e:
@@ -193,7 +194,7 @@ async def save_user(request: Request):
         {user_request}
 
         Instructions for you, Gemini:
-        - Easy meals
+        - Reccomend Common Meals
         - NO FORMATTING
         - ONLY return FULL recipe.
         - DO NOT include any extra commentary, markdown, formatting, or labels.
