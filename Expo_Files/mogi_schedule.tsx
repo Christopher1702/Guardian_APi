@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -11,61 +11,131 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Animated, {
-  FadeInDown,
-  FadeOutUp,
-} from 'react-native-reanimated';
-import { BASE_URL } from '../constants/api';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 export default function Mogi() {
   const router = useRouter();
   const { day } = useLocalSearchParams();
 
-  const [showSubOptions, setShowSubOptions] = useState(false);
-  const [showInput, setShowInput] = useState(false);
-  const [inputValue, setInputValue] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedFrequency, setSelectedFrequency] = useState('');
+  const [chatText, setChatText] = useState('');
+  const [inputPrompt, setInputPrompt] = useState('');
+  const [showFirstButtons, setShowFirstButtons] = useState(false);
+  const [showSecondButtons, setShowSecondButtons] = useState(false);
+  const [inputMode, setInputMode] = useState(false);
+  const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState<string[]>([]);
 
-  const handleSubPress = (category: string) => {
-    if (['SFU', 'Gym', 'Home'].includes(category)) {
-      setSelectedCategory(category);
-      setShowInput(true);
+  // Initial message animation
+  useEffect(() => {
+    const message = 'Based on the category I have set for you, which should we add to?';
+    let current = '';
+    let i = 0;
+
+    const typeNext = () => {
+      if (i < message.length) {
+        current += message[i];
+        setChatText(current);
+        i++;
+        setTimeout(typeNext, 5);
+      } else {
+        setShowFirstButtons(true);
+      }
+    };
+
+    typeNext();
+  }, []);
+
+  // Follow-up message animation
+  useEffect(() => {
+    if (selectedCategory && chatText === '') {
+      const message = `How often is this ${selectedCategory} event in your schedule?`;
+      let current = '';
+      let i = 0;
+
+      const typeNext = () => {
+        if (i < message.length) {
+          current += message[i];
+          setChatText(current);
+          i++;
+          setTimeout(typeNext, 5);
+        } else {
+          setShowSecondButtons(true);
+        }
+      };
+
+      typeNext();
     }
+  }, [selectedCategory, chatText]);
+
+  // Typing animation for input prompt
+  useEffect(() => {
+    if (inputMode && inputPrompt === '') {
+      const message = `What would you like me to remember for ${selectedCategory}?`;
+      let current = '';
+      let i = 0;
+
+      const typeNext = () => {
+        if (i < message.length) {
+          current += message[i];
+          setInputPrompt(current);
+          i++;
+          setTimeout(typeNext, 5);
+        }
+      };
+
+      typeNext();
+    }
+  }, [inputMode, selectedCategory]);
+
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setShowFirstButtons(false);
+    setChatText('');
   };
 
-  const handleSubmit = async () => {
-    if (!inputValue.trim()) return;
-
-    try {
-      const content = `${day} - ${selectedCategory}: ${inputValue}`;
-      await fetch(`${BASE_URL}/save_schedule`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: content,
-      });
-
-      setMessages(prev => [...prev, inputValue]);
-      setInputValue('');
-    } catch (error) {
-      console.error('Error saving schedule:', error);
-    }
+  const handleFrequencySelect = (frequency: string) => {
+    setSelectedFrequency(frequency);
+    setShowSecondButtons(false);
+    setChatText('');
+    setInputMode(true);
   };
 
-  const handleBackToCategories = () => {
-    setShowInput(false);
+  const sendPayload = () => {
+    const payload = {
+      day,
+      category: selectedCategory,
+      frequency: selectedFrequency,
+      message: inputValue.trim(),
+    };
+
+    console.log('Sending payload:', payload);
+
+    // Example: you can send to server here
+    // fetch('/api/save', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(payload),
+    // });
+  };
+
+  const handleSubmit = () => {
+    const trimmed = inputValue.trim();
+    if (!trimmed) return;
+
+    setMessages([...messages, trimmed]);
+    sendPayload();
     setInputValue('');
-    setMessages([]);
   };
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
     >
       <LinearGradient
-        colors={['#ffffff', '#e9d5ff']}
+        colors={['#ffffff', '#e0f7ff']}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={{ flex: 1 }}
@@ -75,72 +145,67 @@ export default function Mogi() {
             <Ionicons name="arrow-back" size={24} color="#14B8A6" />
           </TouchableOpacity>
 
-          {showInput && (
-            <TouchableOpacity style={styles.topRight} onPress={handleBackToCategories}>
-              <Text style={styles.topRightText}>Back</Text>
-            </TouchableOpacity>
-          )}
-
           <Text style={styles.dayTitle}>{day}</Text>
 
-          <View style={styles.buttonGroup}>
-            {!showSubOptions && !showInput && (
-              <>
-                <TouchableOpacity
-                  style={styles.optionButton}
-                  onPress={() => setShowSubOptions(true)}
-                >
-                  <Text style={styles.optionText}>Every {day}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.optionButton}>
-                  <Text style={styles.optionText}>One time event</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.optionButton}>
-                  <Text style={styles.optionText}>Custom</Text>
-                </TouchableOpacity>
-              </>
-            )}
+          {!inputMode && (
+            <View style={styles.chatBubble}>
+              <Text style={styles.chatText}>{chatText}</Text>
+            </View>
+          )}
 
-            {showSubOptions && !showInput && (
-              <>
-                <TouchableOpacity
-                  style={[styles.subButton, { backgroundColor: '#ef4444' }]}
-                  onPress={() => handleSubPress('SFU')}
-                >
-                  <Text style={styles.subButtonText}>SFU</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.subButton, { backgroundColor: '#3b82f6' }]}
-                  onPress={() => handleSubPress('Gym')}
-                >
-                  <Text style={styles.subButtonText}>Gym</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.subButton, { backgroundColor: '#10b981' }]}
-                  onPress={() => handleSubPress('Home')}
-                >
-                  <Text style={styles.subButtonText}>Home</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.subButton, { backgroundColor: '#9ca3af' }]}
-                  onPress={() => handleSubPress('Other')}
-                >
-                  <Text style={styles.subButtonText}>Other</Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
+          {showFirstButtons && (
+            <Animated.View entering={FadeIn.duration(300)} style={styles.centeredButtons}>
+              <TouchableOpacity
+                style={[styles.optionButton, { backgroundColor: '#ef4444' }]}
+                onPress={() => handleCategorySelect('SFU')}
+              >
+                <Text style={styles.optionText}>SFU</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.optionButton, { backgroundColor: '#3b82f6' }]}
+                onPress={() => handleCategorySelect('Gym')}
+              >
+                <Text style={styles.optionText}>Gym</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.optionButton, { backgroundColor: '#10b981' }]}
+                onPress={() => handleCategorySelect('Home')}
+              >
+                <Text style={styles.optionText}>Home</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
 
-          {showInput && (
+          {showSecondButtons && !inputMode && (
+            <Animated.View entering={FadeIn.duration(300)} style={styles.centeredButtons}>
+              <TouchableOpacity
+                style={styles.white3DButton}
+                onPress={() => handleFrequencySelect('Every')}
+              >
+                <Text style={styles.white3DButtonText}>Every {day}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.white3DButton}
+                onPress={() => handleFrequencySelect('One time only')}
+              >
+                <Text style={styles.white3DButtonText}>One time only</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.white3DButton}
+                onPress={() => handleFrequencySelect('Custom')}
+              >
+                <Text style={styles.white3DButtonText}>Custom</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+
+          {inputMode && (
             <Animated.View
               entering={FadeInDown.springify().mass(0.3)}
-              exiting={FadeOutUp}
               style={styles.inputSection}
             >
               <View style={styles.promptBubble}>
-                <Text style={styles.promptText}>
-                  What would you like me to remember for {selectedCategory}?
-                </Text>
+                <Text style={styles.promptText}>{inputPrompt}</Text>
               </View>
 
               {messages.map((msg, index) => (
@@ -151,7 +216,7 @@ export default function Mogi() {
             </Animated.View>
           )}
 
-          {showInput && (
+          {inputMode && (
             <View style={styles.inputRow}>
               <View style={styles.inputContainer}>
                 <TextInput
@@ -178,7 +243,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 60,
-    alignItems: 'center',
   },
   backButton: {
     position: 'absolute',
@@ -190,77 +254,75 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     elevation: 4,
   },
-  topRight: {
-    position: 'absolute',
-    top: 60,
-    right: 24,
-    padding: 8,
-    zIndex: 10,
-  },
-  topRightText: {
-    color: '#0f172a',
-    fontWeight: '600',
-  },
   dayTitle: {
     fontSize: 28,
     fontWeight: '700',
     color: '#1E293B',
     marginTop: 40,
-    marginBottom: '30%',
+    marginBottom: 16,
+    alignSelf: 'center',
   },
-  buttonGroup: {
-    width: '100%',
+  chatBubble: {
+    backgroundColor: '#ffffff',
+    padding: 14,
+    borderRadius: 18,
+    maxWidth: '90%',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    alignSelf: 'flex-start',
+    marginTop: 50,
+    minHeight: 60,
+    justifyContent: 'center',
+  },
+  chatText: {
+    fontSize: 15,
+    color: '#0f172a',
+  },
+  centeredButtons: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: '8%',
+    marginTop: -100,
   },
   optionButton: {
-    width: '50%',
-    height: '15%',
-    backgroundColor: '#ffffff',
-    paddingVertical: 14,
+    width: '60%',
+    height: '13%',
+    paddingVertical: 12,
     borderRadius: 16,
     alignItems: 'center',
-    elevation: 8,
+    elevation: 5,
     marginBottom: 20,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.2,
-        shadowRadius: 10,
-      },
-    }),
   },
   optionText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0f172a',
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 17,
     marginVertical: '10%',
   },
-  subButton: {
-    width: '50%',
-    height: '12%',
+  white3DButton: {
+    width: '60%',
+    height: '13%',
+    paddingVertical: 12,
     borderRadius: 16,
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 8,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
     marginBottom: 20,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.2,
-        shadowRadius: 10,
-      },
-    }),
   },
-  subButtonText: {
-    fontSize: 16,
+  white3DButtonText: {
+    color: '#1E293B',
     fontWeight: '700',
-    color: '#ffffff',
+    fontSize: 17,
   },
   inputSection: {
-    width: '100%',
     paddingHorizontal: 4,
     paddingBottom: 100,
   },
@@ -271,14 +333,10 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     maxWidth: '80%',
     elevation: 6,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.2,
-        shadowRadius: 10,
-      },
-    }),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
   },
   promptText: {
     fontSize: 15,
@@ -308,14 +366,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     elevation: 6,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
-      },
-    }),
   },
   inputContainer: {
     flexDirection: 'row',
