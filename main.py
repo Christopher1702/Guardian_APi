@@ -174,13 +174,13 @@ async def read_user(request: Request):
     name = (await request.body()).decode("utf-8").strip()  # E.g., "Monday", "Tuesday", etc.
 
     doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection(name)
-    doc = doc_ref.get()
+    docs = doc_ref.get()
 
-    if doc.exists:
-        data = doc.to_dict()
-        return data.get("Schedule", "No class times found.")
+    if docs:
+        for doc in docs:
+            print(doc.id, doc.to_dict())
     else:
-        return f"Schedule not found for {name}"
+        print("No documents found.")
     
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
