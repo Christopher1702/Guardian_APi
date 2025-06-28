@@ -98,7 +98,7 @@ Instructions for you, Gemini:
 async def read_user(request: Request):
     name = (await request.body()).decode("utf-8")  # Expects Day
 
-    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection(name)
+    doc_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document(name)
     doc = doc_ref.get()
 
     if doc.exists:
