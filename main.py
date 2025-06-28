@@ -142,7 +142,7 @@ async def upload_image(file: UploadFile = File(...)):
         # thu_data = model.generate_content(f"return thursday time and event only, {rules}, {response.text}")
         # fri_data = model.generate_content(f"return friday time and event only, {rules}, {response.text}")
 
-        mon_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Monday")
+        mon_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Monday")
         # tues_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Tuesday")
         # wed_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Wednesday")
         # thu_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Thursday")
@@ -173,14 +173,13 @@ async def upload_image(file: UploadFile = File(...)):
 async def read_user(request: Request):
     name = (await request.body()).decode("utf-8").strip()  # E.g., "Monday", "Tuesday", etc.
 
-    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection(name)
-    docs = doc_ref.get()
+    doc_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document(name)
+    doc = doc_ref.get()
 
-    if docs:
-        for doc in docs:
-            print(doc.id, doc.to_dict())
+    if doc.exists:
+        print(doc.id, doc.to_dict())
     else:
-        print("No documents found.")
+        print("No document found.")
     
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
