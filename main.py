@@ -12,7 +12,7 @@ from PIL import Image
 import io
 import requests
 
-#----------------------------------------------------------------------------------------
+
 
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 
@@ -26,7 +26,7 @@ db = firestore.client()
 app = FastAPI()
 stored_image: Optional[bytes] = None # This will hold the image content in memory
 
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
  # Allow all origins (good for testing, not for production!)
 app.add_middleware(
@@ -37,13 +37,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 @app.get("/") #SERVER STATE TEST
 def read_root():
     return {"message": "Hello from your FastAPI server!"}
 
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 @app.post("/save", response_class=PlainTextResponse)
 async def save_user(request: Request):
@@ -92,7 +92,7 @@ Instructions for you, Gemini:
 
     return f"Schedule updated successfully: {updated_day}"
 
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 #DISPLAYS USER SCHEDULE
 @app.post("/read", response_class=PlainTextResponse)
 async def read_user(request: Request):
@@ -107,7 +107,7 @@ async def read_user(request: Request):
     else:
         return f"Schedule not found for {name}"
 
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 #UPLOAD USER CLASS SCHDULE
 @app.post("/school_class_schedule")  # Receive file and convert & store to PIL image
 async def upload_image(file: UploadFile = File(...)):
@@ -137,22 +137,22 @@ async def upload_image(file: UploadFile = File(...)):
         rules = """Dont include the day of the week heading!!!"""
         
         monday_data = model.generate_content(f"return monday time and event only, {rules}, {response.text}") 
-        tues_data = model.generate_content(f"return tuesday time and event only, {rules}, {response.text}")
-        wed_data = model.generate_content(f"return wednesday time and event only, {rules}, {response.text}")
-        thu_data = model.generate_content(f"return thursday time and event only, {rules}, {response.text}")
-        fri_data = model.generate_content(f"return friday time and event only, {rules}, {response.text}")
+        # tues_data = model.generate_content(f"return tuesday time and event only, {rules}, {response.text}")
+        # wed_data = model.generate_content(f"return wednesday time and event only, {rules}, {response.text}")
+        # thu_data = model.generate_content(f"return thursday time and event only, {rules}, {response.text}")
+        # fri_data = model.generate_content(f"return friday time and event only, {rules}, {response.text}")
 
         mon_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Monday")
-        tues_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Tuesday")
-        wed_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Wednesday")
-        thu_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Thursday")
-        fri_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Friday")
+        # tues_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Tuesday")
+        # wed_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Wednesday")
+        # thu_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Thursday")
+        # fri_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection("Friday")
         
         mon_ref.set({"Schedule": monday_data.text})
-        tues_ref.set({"Schedule": tues_data.text})
-        wed_ref.set({"Schedule": wed_data.text})
-        thu_ref.set({"Schedule": thu_data.text})
-        fri_ref.set({"Schedule": fri_data.text})
+        # tues_ref.set({"Schedule": tues_data.text})
+        # wed_ref.set({"Schedule": wed_data.text})
+        # thu_ref.set({"Schedule": thu_data.text})
+        # fri_ref.set({"Schedule": fri_data.text})
 
         print(f"Received image: {file.filename} ({file.content_type}), size: {len(stored_image)} bytes") # Optionally log metadata
 
@@ -173,7 +173,7 @@ async def upload_image(file: UploadFile = File(...)):
 async def read_user(request: Request):
     name = (await request.body()).decode("utf-8").strip()  # E.g., "Monday", "Tuesday", etc.
 
-    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document(name)
+    doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document("Every_Week").collection(name)
     doc = doc_ref.get()
 
     if doc.exists:
