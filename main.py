@@ -122,7 +122,7 @@ async def upload_image(file: UploadFile = File(...)):
         prompt = """
         Extract the user's weekly class schedule from this image.
         Rules:
-        -USE THIS FORMAT -> Time:Event
+        -USE THIS FORMAT -> [TIME START-TIME END:EVENT]
         - Use 24-hour time format.
         - No extra commentary - JUST SHOW RESULTS
         - No Bold fonts or markdown.
@@ -134,11 +134,11 @@ async def upload_image(file: UploadFile = File(...)):
         
         rules = """Dont include the day of the week heading!!!"""
         
-        monday_data = model.generate_content(f"return monday time and event only [TIME:EVENT], {rules}, {response.text}") 
-        tues_data = model.generate_content(f"return tuesday time and event only [TIME:EVENT], {rules}, {response.text}")
-        wed_data = model.generate_content(f"return wednesday time and event only [TIME:EVENT], {rules}, {response.text}")
-        thu_data = model.generate_content(f"return thursday time and event only [TIME:EVENT], {rules}, {response.text}")
-        fri_data = model.generate_content(f"return friday time and event only [TIME:EVENT], {rules}, {response.text}")
+        monday_data = model.generate_content(f"return monday time and event only [TIME START-TIME END:EVENT], {rules}, {response.text}") 
+        tues_data = model.generate_content(f"return tuesday time and event only [TIME START-TIME END:EVENT], {rules}, {response.text}")
+        wed_data = model.generate_content(f"return wednesday time and event only [TIME START-TIME END:EVENT], {rules}, {response.text}")
+        thu_data = model.generate_content(f"return thursday time and event only [TIME START-TIME END:EVENT], {rules}, {response.text}")
+        fri_data = model.generate_content(f"return friday time and event only [TIME START-TIME END:EVENT], {rules}, {response.text}")
 
         mon_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Monday")
         mon_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Monday")
