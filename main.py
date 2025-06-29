@@ -122,7 +122,7 @@ async def upload_image(file: UploadFile = File(...)):
         prompt = """
         Extract the user's weekly class schedule from this image.
         Rules:
-        -USE THIS FORMAT -> [TIME START-TIME END:EVENT]
+        -USE THIS FORMAT -> [TIME_START-TIME_END : EVENT]
         - Use 24-hour time format.
         - No extra commentary - JUST SHOW RESULTS
         - No Bold fonts or markdown.
@@ -132,25 +132,26 @@ async def upload_image(file: UploadFile = File(...)):
         if not response.text.strip():
             return {"error": "Gemini returned an empty response."}
         
-        # rules = """Dont include the day of the week heading!!!"""
+        rules = """Dont include the day of the week heading!!!"""
         
-        mon_data = model.generate_content(f"return monday time and event only, {response.text}") 
-        tues_data = model.generate_content(f"return tuesday time and event only, {response.text}")
-        wed_data = model.generate_content(f"return wednesday time and event only, {response.text}")
-        thu_data = model.generate_content(f"return thursday time and event only, {response.text}")
-        fri_data = model.generate_content(f"return friday time and event only, {response.text}")
+        monday_data = model.generate_content(f"return monday time and event only, {rules}, {response.text}") 
+        # tues_data = model.generate_content(f"return tuesday time and event only, {rules}, {response.text}")
+        # wed_data = model.generate_content(f"return wednesday time and event only, {rules}, {response.text}")
+        # thu_data = model.generate_content(f"return thursday time and event only, {rules}, {response.text}")
+        # fri_data = model.generate_content(f"return friday time and event only, {rules}, {response.text}")
 
         mon_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Monday")
-        tues_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Tuesday")
-        wed_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Wednesday")
-        thu_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Thursday")
-        fri_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Friday")
+        # mon_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Monday")
+        # tues_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Tuesday")
+        # wed_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Wednesday")
+        # thu_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Thursday")
+        # fri_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Friday")
         
-        mon_ref.set({"Schedule": mon_data.text})
-        tues_ref.set({"Schedule": tues_data.text})
-        wed_ref.set({"Schedule": wed_data.text})
-        thu_ref.set({"Schedule": thu_data.text})
-        fri_ref.set({"Schedule": fri_data.text})
+        mon_ref.set({"Schedule": monday_data.text})
+        # tues_ref.set({"Schedule": tues_data.text})
+        # wed_ref.set({"Schedule": wed_data.text})
+        # thu_ref.set({"Schedule": thu_data.text})
+        # fri_ref.set({"Schedule": fri_data.text})
 
         print(f"Received image: {file.filename} ({file.content_type}), size: {len(stored_image)} bytes") # Optionally log metadata
 
