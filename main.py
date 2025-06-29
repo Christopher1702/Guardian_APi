@@ -121,6 +121,7 @@ async def upload_image(file: UploadFile = File(...)):
         image = Image.open(io.BytesIO(stored_image))  # Convert bytes to PIL Image
         prompt = """
         Extract the user's weekly class schedule from this image.
+
         Rules:
         -USE THIS FORMAT -> [TIME_START-TIME_END : EVENT]
         - Use 24-hour time format.
@@ -134,7 +135,7 @@ async def upload_image(file: UploadFile = File(...)):
         
         rules = """Dont include the day of the week heading!!!"""
         
-        monday_data = model.generate_content(f"return monday time and event only, {rules}, {response.text}") 
+        monday_data = model.generate_content(f"Based on this, {response.text}, Repeated back on MONDAYS times and events ONLY!! {rules}") 
         # tues_data = model.generate_content(f"return tuesday time and event only, {rules}, {response.text}")
         # wed_data = model.generate_content(f"return wednesday time and event only, {rules}, {response.text}")
         # thu_data = model.generate_content(f"return thursday time and event only, {rules}, {response.text}")
