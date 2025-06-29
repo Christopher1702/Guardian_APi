@@ -16,7 +16,7 @@ import requests
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 
 
-model = genai.GenerativeModel('gemini-2.0-flash')
+model = genai.GenerativeModel('gemini-2.5-flash')
 load_dotenv()
 cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
 cred = credentials.Certificate(cred_path)
