@@ -129,11 +129,11 @@ async def upload_image(file: UploadFile = File(...)):
         -Format = HH:MM-HH:MM Event
         """
 
-        prompt_mon = """I have provided a class schedule, exactred MONDAYS SCHEDULE ONLY"""
-        prompt_tues = """I have provided a class schedule, exactred MONDAYS SCHEDULE ONLY"""
-        prompt_wed = """I have provided a class schedule, exactred MONDAYS SCHEDULE ONLY"""
-        prompt_thu = """I have provided a class schedule, exactred MONDAYS SCHEDULE ONLY"""
-        prompt_fri = """I have provided a class schedule, exactred MONDAYS SCHEDULE ONLY"""
+        prompt_mon = """I have provided a class schedule, exact MONDAYS SCHEDULE ONLY"""
+        prompt_tues = """I have provided a class schedule, exact TUESDAY SCHEDULE ONLY"""
+        prompt_wed = """I have provided a class schedule, exact WEDNESDAY SCHEDULE ONLY"""
+        prompt_thu = """I have provided a class schedule, exact THURSDAY SCHEDULE ONLY"""
+        prompt_fri = """I have provided a class schedule, exact FRIDAY SCHEDULE ONLY"""
         
         monday_data = model.generate_content([prompt_mon, image, rules]) 
         tues_data = model.generate_content([prompt_tues, image, rules])
