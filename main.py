@@ -136,8 +136,10 @@ async def upload_image(file: UploadFile = File(...)):
         - No extra commentary - JUST SHOW RESULTS
         - No Bold fonts or markdown.
         - Dont include the day of the week heading!!!"""
+
+        prompt = """I have provided a class schedule, exactred MONDAYS SCHEDULE ONLY"""
         
-        monday_data = model.generate_content(f"Based on this image, {image}, Extract MONDAYS times and events ONLY!! {rules}") 
+        monday_data = model.generate_content([prompt, image, rules]) 
         # tues_data = model.generate_content(f"return tuesday time and event only, {rules}, {response.text}")
         # wed_data = model.generate_content(f"return wednesday time and event only, {rules}, {response.text}")
         # thu_data = model.generate_content(f"return thursday time and event only, {rules}, {response.text}")
