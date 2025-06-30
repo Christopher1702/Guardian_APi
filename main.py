@@ -119,47 +119,42 @@ async def upload_image(file: UploadFile = File(...)):
 
     try:
         image = Image.open(io.BytesIO(stored_image))  # Convert bytes to PIL Image
-        # prompt = """
-        # Extract the user's weekly class schedule from this image.
-
-        # Rules:
-        # - Use 24-hour time format.
-        # - No extra commentary - JUST SHOW RESULTS
-        # - No Bold fonts or markdown.
-        # - Dont include the day of the week heading!!!
-        # """
-        # response = model.generate_content([prompt, image])  # Send image + prompt
         
         rules = """        
         Rules:
         - Use 24-hour time format.
         - No extra commentary - JUST SHOW RESULTS
         - No Bold fonts or markdown.
-        - Dont include the day of the week heading!!!"""
+        - Dont include the day of the week heading!!!
+        -Format = HH:MM-HH:MM Event
+        """
 
-        prompt = """I have provided a class schedule, exactred MONDAYS SCHEDULE ONLY"""
+        prompt_mon = """I have provided a class schedule, exactred MONDAYS SCHEDULE ONLY"""
+        prompt_tues = """I have provided a class schedule, exactred MONDAYS SCHEDULE ONLY"""
+        prompt_wed = """I have provided a class schedule, exactred MONDAYS SCHEDULE ONLY"""
+        prompt_thu = """I have provided a class schedule, exactred MONDAYS SCHEDULE ONLY"""
+        prompt_fri = """I have provided a class schedule, exactred MONDAYS SCHEDULE ONLY"""
         
-        monday_data = model.generate_content([prompt, image, rules]) 
-        # tues_data = model.generate_content(f"return tuesday time and event only, {rules}, {response.text}")
-        # wed_data = model.generate_content(f"return wednesday time and event only, {rules}, {response.text}")
-        # thu_data = model.generate_content(f"return thursday time and event only, {rules}, {response.text}")
-        # fri_data = model.generate_content(f"return friday time and event only, {rules}, {response.text}")
+        monday_data = model.generate_content([prompt_mon, image, rules]) 
+        tues_data = model.generate_content([prompt_tues, image, rules])
+        wed_data = model.generate_content([prompt_wed, image, rules])
+        thu_data = model.generate_content([prompt_thu, image, rules])
+        fri_data = model.generate_content([prompt_fri, image, rules])
 
         if not  monday_data.text.strip():
             return {"error": "Gemini returned an empty response."}
 
         mon_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Monday")
-        # mon_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Monday")
-        # tues_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Tuesday")
-        # wed_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Wednesday")
-        # thu_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Thursday")
-        # fri_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Friday")
+        tues_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Tuesday")
+        wed_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Wednesday")
+        thu_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Thursday")
+        fri_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Friday")
         
         mon_ref.set({"Schedule": monday_data.text})
-        # tues_ref.set({"Schedule": tues_data.text})
-        # wed_ref.set({"Schedule": wed_data.text})
-        # thu_ref.set({"Schedule": thu_data.text})
-        # fri_ref.set({"Schedule": fri_data.text})
+        tues_ref.set({"Schedule": tues_data.text})
+        wed_ref.set({"Schedule": wed_data.text})
+        thu_ref.set({"Schedule": thu_data.text})
+        fri_ref.set({"Schedule": fri_data.text})
 
         print(f"Received image: {file.filename} ({file.content_type}), size: {len(stored_image)} bytes") # Optionally log metadata
 
