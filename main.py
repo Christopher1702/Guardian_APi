@@ -119,27 +119,32 @@ async def upload_image(file: UploadFile = File(...)):
 
     try:
         image = Image.open(io.BytesIO(stored_image))  # Convert bytes to PIL Image
-        prompt = """
-        Extract the user's weekly class schedule from this image.
+        # prompt = """
+        # Extract the user's weekly class schedule from this image.
 
+        # Rules:
+        # - Use 24-hour time format.
+        # - No extra commentary - JUST SHOW RESULTS
+        # - No Bold fonts or markdown.
+        # - Dont include the day of the week heading!!!
+        # """
+        # response = model.generate_content([prompt, image])  # Send image + prompt
+        
+        rules = """        
         Rules:
-        -USE THIS FORMAT -> [TIME_START-TIME_END : EVENT]
         - Use 24-hour time format.
         - No extra commentary - JUST SHOW RESULTS
         - No Bold fonts or markdown.
-        """
-        response = model.generate_content([prompt, image])  # Send image + prompt
-
-        if not response.text.strip():
-            return {"error": "Gemini returned an empty response."}
+        - Dont include the day of the week heading!!!"""
         
-        rules = """Dont include the day of the week heading!!!"""
-        
-        monday_data = model.generate_content(f"Based on this, {response.text}, Repeated back on MONDAYS times and events ONLY!! {rules}") 
+        monday_data = model.generate_content(f"Based on this image, {image}, Extract MONDAYS times and events ONLY!! {rules}") 
         # tues_data = model.generate_content(f"return tuesday time and event only, {rules}, {response.text}")
         # wed_data = model.generate_content(f"return wednesday time and event only, {rules}, {response.text}")
         # thu_data = model.generate_content(f"return thursday time and event only, {rules}, {response.text}")
         # fri_data = model.generate_content(f"return friday time and event only, {rules}, {response.text}")
+
+        if not  monday_data.text.strip():
+            return {"error": "Gemini returned an empty response."}
 
         mon_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Monday")
         # mon_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Monday")
