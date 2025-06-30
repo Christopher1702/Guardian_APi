@@ -110,64 +110,79 @@ async def read_user(request: Request):
 @app.post("/school_class_schedule")  # Receive file and convert & store to PIL image
 async def upload_image(file: UploadFile = File(...)):
     global stored_image
-    if not file.content_type.startswith("image/"): #If File doesnt exisit
+    if not file.content_type.startswith("image/"):
         return JSONResponse(status_code=400, content={"error": "Invalid file type"})
-    
-    stored_image = await file.read()  # Read image content into memory (bytes)
-    if stored_image is None: #if nothing was received 
+
+    stored_image = await file.read()
+    if stored_image is None:
         return {"error": "No image uploaded yet."}
 
+    def extract_text(response):
+        if not response.candidates:
+            return None
+        parts = response.candidates[0].content.parts
+        if not parts:
+            return None
+        return parts[0].text if hasattr(parts[0], "text") else None
+
     try:
-        image = Image.open(io.BytesIO(stored_image))  # Convert bytes to PIL Image
-        
+        image = Image.open(io.BytesIO(stored_image))
+
         rules = """        
         Rules:
         - Use 24-hour time format.
         - No extra commentary - JUST SHOW RESULTS
         - No Bold fonts or markdown.
-        - Dont include the day of the week heading!!!
-        -Format = HH:MM-HH:MM Event
+        - Don't include the day of the week heading!!!
+        - Format = HH:MM-HH:MM Event
         """
 
-        prompt_mon = """I have provided a class schedule, exact MONDAYS SCHEDULE ONLY"""
-        prompt_tues = """I have provided a class schedule, exact TUESDAY SCHEDULE ONLY"""
-        prompt_wed = """I have provided a class schedule, exact WEDNESDAY SCHEDULE ONLY"""
-        prompt_thu = """I have provided a class schedule, exact THURSDAY SCHEDULE ONLY"""
-        prompt_fri = """I have provided a class schedule, exact FRIDAY SCHEDULE ONLY"""
-        
+        prompt_mon = """I have provided a class schedule, exactred MONDAYS SCHEDULE ONLY"""
+        prompt_tues = """I have provided a class schedule, exactred TUESDAYS SCHEDULE ONLY"""
+        prompt_wed = """I have provided a class schedule, exactred WEDNESDAYS SCHEDULE ONLY"""
+        prompt_thu = """I have provided a class schedule, exactred THURSDAYS SCHEDULE ONLY"""
+        prompt_fri = """I have provided a class schedule, exactred FRIDAYS SCHEDULE ONLY"""
+
         monday_data = model.generate_content([prompt_mon, image, rules]) 
         tues_data = model.generate_content([prompt_tues, image, rules])
         wed_data = model.generate_content([prompt_wed, image, rules])
         thu_data = model.generate_content([prompt_thu, image, rules])
         fri_data = model.generate_content([prompt_fri, image, rules])
 
-        if not  monday_data.text.strip():
-            return {"error": "Gemini returned an empty response."}
+        monday_text = extract_text(monday_data)
+        tues_text = extract_text(tues_data)
+        wed_text = extract_text(wed_data)
+        thu_text = extract_text(thu_data)
+        fri_text = extract_text(fri_data)
+
+        if not monday_text:
+            return {"error": "Gemini returned an empty response for Monday."}
 
         mon_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Monday")
         tues_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Tuesday")
         wed_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Wednesday")
         thu_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Thursday")
         fri_ref = db.collection("Users").document("Christopher").collection("Class_Schedule").document("Friday")
-        
-        mon_ref.set({"Schedule": monday_data.text})
-        tues_ref.set({"Schedule": tues_data.text})
-        wed_ref.set({"Schedule": wed_data.text})
-        thu_ref.set({"Schedule": thu_data.text})
-        fri_ref.set({"Schedule": fri_data.text})
 
-        print(f"Received image: {file.filename} ({file.content_type}), size: {len(stored_image)} bytes") # Optionally log metadata
+        mon_ref.set({"Schedule": monday_text})
+        tues_ref.set({"Schedule": tues_text or ""})
+        wed_ref.set({"Schedule": wed_text or ""})
+        thu_ref.set({"Schedule": thu_text or ""})
+        fri_ref.set({"Schedule": fri_text or ""})
+
+        print(f"Received image: {file.filename} ({file.content_type}), size: {len(stored_image)} bytes")
 
         return {
             "status": "success",
             "filename": file.filename,
             "size_bytes": len(stored_image),
-            "stored_to": "Users/Christopher/Schedule/Every_Week"
+            "stored_to": "Users/Christopher/Class_Schedule/Weekdays"
         }
 
     except Exception as e:
         print("Failed to process schedule:", e)
         return {"error": "Schedule reading failed"}
+
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
