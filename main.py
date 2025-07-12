@@ -14,8 +14,6 @@ import requests
 
 
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
-
-
 model = genai.GenerativeModel('gemini-2.5-flash')
 load_dotenv()
 cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
@@ -36,59 +34,10 @@ app.add_middleware(
 )
 
 
-
 @app.get("/") #SERVER STATE TEST
 def read_root():
     return {"message": "Hello from your FastAPI server!"}
 
-
-
-@app.post("/save", response_class=PlainTextResponse)
-async def save_user(request: Request):
-    user_request = (await request.body()).decode("utf-8")
-
-    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    week_data = {}
-
-    # Step 1: Gather existing schedule from Firestore
-    for day in days:
-        doc_ref = db.collection("Users").document("Christopher").collection("Schedule").document(day)
-        doc = doc_ref.get()
-        if doc.exists:
-            week_data[day] = doc.to_dict()
-        else:
-            week_data[day] = {}
-
-    # Step 2: Ask Gemini to make the update
-    prompt = f"""
-This is the user's weekly schedule:
-
-{week_data}
-
-The user input is:
-"{user_request}"
-
-Instructions for you, Gemini:
-- Interpret the user's request and update the schedule accordingly.
-- DO NOT return the entire week.
-- ONLY return the updated schedule text for the ONE DAY that changed.
-- DO NOT include any extra commentary, markdown, formatting, or labels.
-- Just return the plain text schedule for that day.
-    """.strip()
-
-    response = model.generate_content(prompt)
-
-    # Step 3: Identify which day the user is referring to
-    updated_day = next((day for day in days if day.lower() in user_request.lower()), None)
-
-    if not updated_day:
-        return "Error: Could not identify a day to update. Please include the day name in your request."
-
-    # Step 4: Save ONLY that day's response to Firestore
-    target_ref = db.collection("Users").document("Christopher").collection("Schedule").document(updated_day)
-    target_ref.set({ "Schedule": response.text.strip() })
-
-    return f"Schedule updated successfully: {updated_day}"
 
 
 #DISPLAYS USER SCHEDULE
@@ -104,6 +53,7 @@ async def read_user(request: Request):
         return data.get("Schedule", "No class times found.")
     else:
         return f"Schedule not found for {name}"
+
 
 
 #UPLOAD USER CLASS SCHDULE
@@ -184,7 +134,47 @@ async def upload_image(file: UploadFile = File(...)):
         return {"error": "Schedule reading failed"}
 
 
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Save individual agenda event
+@app.post("/add_agenda_event", response_class=PlainTextResponse)
+async def add_agenda_event(request: Request):
+    try:
+        data = await request.json()
+        title = data.get("title")
+        month = data.get("month")
+        day = data.get("day")
+        start_time = data.get("startTime")
+        end_time = data.get("endTime")
+
+        if not all([title, month, day, start_time, end_time]):
+            return PlainTextResponse("Missing one or more required fields.", status_code=400)
+
+        # Construct document ID using a readable format
+        event_id = f"{month}_{day}_{start_time.replace(' ', '').replace(':', '')}"
+
+        # Point to the correct Firestore path
+        doc_ref = db.collection("Users") \
+                    .document("Christopher") \
+                    .collection("One_Time_Schedule") \
+                    .document("One_Time_Event") \
+                    .collection("Events") \
+                    .document(event_id)
+
+        # Save the event details
+        doc_ref.set({
+            "Title": title,
+            "Month": month,
+            "Day": day,
+            "StartTime": start_time,
+            "EndTime": end_time,
+        })
+
+        return f"One-time event saved for {month} {day}: {title} ({start_time} - {end_time})"
+
+    except Exception as e:
+        print("Error saving one-time event:", e)
+        return PlainTextResponse("Failed to save one-time event.", status_code=500)
+
+
 
 @app.post("/agenda", response_class=PlainTextResponse)
 async def read_user(request: Request):
@@ -198,7 +188,7 @@ async def read_user(request: Request):
     else:
         print("No document found.")
     
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 @app.post("/meal_build", response_class=PlainTextResponse)
 async def save_user(request: Request):
@@ -250,7 +240,7 @@ async def save_user(request: Request):
 
     return "Meal and image updated successfully: OK"
 
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 @app.get("/fetch_recipe", response_class=PlainTextResponse)
 async def fetch_recipe():
@@ -263,7 +253,7 @@ async def fetch_recipe():
     else:
         return "No recipe document found for Monday."
 
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 @app.get("/meal_img_link", response_class=PlainTextResponse)
 async def fetch_image():
@@ -276,4 +266,4 @@ async def fetch_image():
     else:
         return ""
 
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
