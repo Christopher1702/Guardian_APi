@@ -134,6 +134,7 @@ async def upload_image(file: UploadFile = File(...)):
         return {"error": "Schedule reading failed"}
 
 
+
 # Save individual agenda event
 @app.post("/add_agenda_event", response_class=JSONResponse)
 async def add_agenda_event(request: Request):
@@ -173,6 +174,33 @@ async def add_agenda_event(request: Request):
     except Exception as e:
         print("Error saving one-time event:", e)
         return PlainTextResponse("Failed to save one-time event.", status_code=500)
+
+
+
+@app.post("/get_agenda_one_time")
+async def get_agenda_events(request: Request):
+    try:
+        data = await request.json()
+        key = data.get("key")  # e.g., "Jan_2"
+        if not key:
+            return JSONResponse(status_code=400, content={"error": "Missing key."})
+
+        events_ref = db.collection("Users") \
+                       .document("Christopher") \
+                       .collection("One_Time_Schedule") \
+                       .document("One_Time_Event") \
+                       .collection("Events")
+
+        query = events_ref.where("Month", "==", key.split('_')[0]) \
+                          .where("Day", "==", key.split('_')[1])
+        docs = query.stream()
+
+        results = [doc.to_dict() for doc in docs]
+        return results
+
+    except Exception as e:
+        print("Error fetching agenda events:", e)
+        return JSONResponse(status_code=500, content={"error": "Failed to fetch events."})
 
 
 
@@ -265,5 +293,4 @@ async def fetch_image():
         return data.get("Meal_Link", "")
     else:
         return ""
-
 
