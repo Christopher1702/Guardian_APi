@@ -135,7 +135,7 @@ async def upload_image(file: UploadFile = File(...)):
 
 
 # Save individual agenda event
-@app.post("/add_agenda_event", response_class=PlainTextResponse)
+@app.post("/add_agenda_event", response_class=JSONResponse)
 async def add_agenda_event(request: Request):
     try:
         data = await request.json()
