@@ -82,3 +82,11 @@ def get_protein():
     # return plain text or JSON — both are supported by the frontend
     return {"protein": data.get("Protein", "")}
     # or: return PlainTextResponse(data.get("Protein", ""))
+
+@app.get("/calories")
+def get_calories():
+    doc = db.collection("MacroTrack_Ai").document("User").collection("Track").document("Dinner").get()
+    data = doc.to_dict() or {}
+    return {"calories": data.get("Calories", "")}
+    # If you prefer plain text instead of JSON:
+    # return PlainTextResponse(data.get("Calories", ""))
