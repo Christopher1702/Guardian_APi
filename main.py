@@ -73,3 +73,12 @@ async def receive_user_input(request: Request):
 
     return {"status": "success", "received": food_txt}
 
+
+
+@app.get("/protein")
+def get_protein():
+    doc = db.collection("MacroTrack_Ai").document("User").collection("Track").document("Dinner").get()
+    data = doc.to_dict() or {}
+    # return plain text or JSON — both are supported by the frontend
+    return {"protein": data.get("Protein", "")}
+    # or: return PlainTextResponse(data.get("Protein", ""))
