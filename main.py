@@ -39,15 +39,17 @@ def read_root():
 
 @app.post("/upload_food")
 async def receive_user_input(request: Request):
+    # Read plain text from request
+    protein_bytes = await request.body()
+    protein_str = protein_bytes.decode("utf-8").strip()
     """
     Receives user input from the frontend and returns a simple acknowledgment.
     """
     prompt = f"""
-        {request}
+        {protein_str}
         Instructions for Gemini:
-        1. Return the protein.
-        2. only return the numerical value
-        3. DO NOT include any extra commentary, markdown, formatting, or labels.
+        1. Return the protein and calories counts.
+        2. DO NOT BOLD ANY TEXT
         4. Just return the plain text.
     """.strip()
 
@@ -58,5 +60,5 @@ async def receive_user_input(request: Request):
     doc_ref.set({ "Protein": protein }, merge=True)
 
 
-    return {"status": "success", "received": request}
+    return {"status": "success", "received": protein_str}
 
