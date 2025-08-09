@@ -69,6 +69,7 @@ async def receive_user_input(request: Request):
 
     doc_ref = db.collection("MacroTrack_Ai").document("User").collection("Track").document("Dinner")
     doc_ref.set({ "Protein": protein }, merge=True)
-    doc_ref.set({ "Caloires": calorie }, merge=True)
+    doc_ref.set({ "Calories": calorie }, merge=True)
 
     return {"status": "success", "received": food_txt}
+
