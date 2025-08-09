@@ -39,26 +39,36 @@ def read_root():
 
 @app.post("/upload_food")
 async def receive_user_input(request: Request):
+
     # Read plain text from request
-    protein_bytes = await request.body()
-    protein_str = protein_bytes.decode("utf-8").strip()
-    """
-    Receives user input from the frontend and returns a simple acknowledgment.
-    """
-    prompt = f"""
-        {protein_str}
+    user_upload = await request.body()
+    food_txt = user_upload.decode("utf-8").strip()
+
+    protein_prompt = f"""
+        {food_txt}
         Instructions for Gemini:
-        1. Return the protein and calories counts.
+        1. Return the protein count
         2. DO NOT BOLD ANY TEXT
         4. Just return the plain text.
     """.strip()
 
-    response = model.generate_content(prompt)
-    protein = response.text.strip()
+    calorie_prompt = f"""
+        {food_txt}
+        Instructions for Gemini:
+        1. Return the calorie count
+        2. DO NOT BOLD ANY TEXT
+        4. Just return the plain text.
+    """.strip()    
+
+
+    protein_response = model.generate_content(protein_prompt)
+    protein = protein_response.text.strip()
+    calorie_response = model.generate_content(calorie_prompt)
+    calorie = calorie_response.text.strip()
+
 
     doc_ref = db.collection("MacroTrack_Ai").document("User").collection("Track").document("Dinner")
     doc_ref.set({ "Protein": protein }, merge=True)
+    doc_ref.set({ "Caloires": calorie }, merge=True)
 
-
-    return {"status": "success", "received": protein_str}
-
+    return {"status": "success", "received": food_txt}
