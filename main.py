@@ -60,16 +60,26 @@ async def receive_user_input(request: Request):
         4. Just return the plain text.
     """.strip()    
 
+    fibre_prompt = f"""
+        {food_txt}
+        Instructions for Gemini:
+        1. Return the calorie count
+        2. DO NOT BOLD ANY TEXT
+        4. Just return the plain text.
+    """.strip()
+
 
     protein_response = model.generate_content(protein_prompt)
     protein = protein_response.text.strip()
     calorie_response = model.generate_content(calorie_prompt)
     calorie = calorie_response.text.strip()
-
-
+    fibre_response = model.generate_content(fibre_prompt)
+    fibre = fibre_response.text.strip()
+    
     doc_ref = db.collection("MacroTrack_Ai").document("User").collection("Track").document("Dinner")
     doc_ref.set({ "Protein": protein }, merge=True)
     doc_ref.set({ "Calories": calorie }, merge=True)
+    doc_ref.set({ "Fibre": calorie }, merge=True)
 
     return {"status": "success", "received": food_txt}
 
@@ -90,3 +100,11 @@ def get_calories():
     return {"calories": data.get("Calories", "")}
     # If you prefer plain text instead of JSON:
     # return PlainTextResponse(data.get("Calories", ""))
+
+@app.get("/fibre")
+def get_fibre():
+    doc = db.collection("MacroTrack_Ai").document("User").collection("Track").document("Dinner").get()
+    data = doc.to_dict() or {}
+    return {"fibre": data.get("Fibre", "")}
+    # Or plain text:
+    # return PlainTextResponse(data.get("Fibre", ""))
