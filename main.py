@@ -63,7 +63,7 @@ async def receive_user_input(request: Request):
     fibre_prompt = f"""
         {food_txt}
         Instructions for Gemini:
-        1. Return the calorie count
+        1. Return the fibre count
         2. DO NOT BOLD ANY TEXT
         4. Just return the plain text.
     """.strip()
@@ -108,3 +108,4 @@ def get_fibre():
     return {"fibre": data.get("Fibre", "")}
     # Or plain text:
     # return PlainTextResponse(data.get("Fibre", ""))
+
