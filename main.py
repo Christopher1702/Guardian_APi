@@ -49,6 +49,7 @@ async def receive_user_input(request: Request):
         Instructions for Gemini:
         1. Return the protein count
         2. DO NOT BOLD ANY TEXT
+        3. NO UNITS ONLY NUMBERS
         4. Just return the plain text.
     """.strip()
 
@@ -57,6 +58,7 @@ async def receive_user_input(request: Request):
         Instructions for Gemini:
         1. Return the calorie count
         2. DO NOT BOLD ANY TEXT
+        3. NO UNITS ONLY NUMBERS
         4. Just return the plain text.
     """.strip()    
 
@@ -65,6 +67,7 @@ async def receive_user_input(request: Request):
         Instructions for Gemini:
         1. Return the fibre count
         2. DO NOT BOLD ANY TEXT
+        3. NO UNITS ONLY NUMBERS
         4. Just return the plain text.
     """.strip()
 
@@ -79,7 +82,7 @@ async def receive_user_input(request: Request):
     doc_ref = db.collection("MacroTrack_Ai").document("User").collection("Track").document("Dinner")
     doc_ref.set({ "Protein": protein }, merge=True)
     doc_ref.set({ "Calories": calorie }, merge=True)
-    doc_ref.set({ "Fibre": calorie }, merge=True)
+    doc_ref.set({ "Fibre": fibre }, merge=True)
 
     return {"status": "success", "received": food_txt}
 
@@ -108,4 +111,3 @@ def get_fibre():
     return {"fibre": data.get("Fibre", "")}
     # Or plain text:
     # return PlainTextResponse(data.get("Fibre", ""))
-
