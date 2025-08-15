@@ -82,10 +82,9 @@ async def receive_user_input(request: Request):
     ai_prompt = f"""
         {food_txt}
         Instructions for Gemini:
-        1. Explain Macro break down of food (calorie:{calorie}, protein:{protein}, fibre:{fibre})
-        2. Short Explaination
-        3. DO NOT BOLD ANY TEXT
-        4. Just return the plain text.
+        1. VERY SHORT explaination of macro break down of meal (calorie:{calorie}, protein:{protein}, fibre:{fibre}) 
+        2. DO NOT BOLD ANY TEXT
+        3. Just return the plain text.
     """.strip()
 
     ai_response = model.generate_content(ai_prompt)
