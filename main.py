@@ -78,11 +78,23 @@ async def receive_user_input(request: Request):
     calorie = calorie_response.text.strip()
     fibre_response = model.generate_content(fibre_prompt)
     fibre = fibre_response.text.strip()
+
+    ai_prompt = f"""
+        {food_txt}
+        Instructions for Gemini:
+        1. Return a confirmation based on what meal you recieved and that you have processed the required macros: {protein, calorie, fibre}
+        2. DO NOT BOLD ANY TEXT
+        4. Just return the plain text.
+    """.strip()
+
+    ai_response = model.generate_content(ai_prompt)
+    ai = ai_response.text.strip()
     
     doc_ref = db.collection("MacroTrack_Ai").document("User").collection("Track").document("Dinner")
     doc_ref.set({ "Protein": protein }, merge=True)
     doc_ref.set({ "Calories": calorie }, merge=True)
     doc_ref.set({ "Fibre": fibre }, merge=True)
+    doc_ref.set({ "Ai_Response": ai }, merge=True)
 
     return {"status": "success", "received": food_txt}
 
