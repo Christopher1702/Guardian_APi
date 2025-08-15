@@ -82,7 +82,7 @@ async def receive_user_input(request: Request):
     ai_prompt = f"""
         {food_txt}
         Instructions for Gemini:
-        1. Return a confirmation based on what meal you recieved and that you have processed the required macros: {protein, calorie, fibre}
+        1. Explain Macro break down of food (calorie:{calorie}, protein:{protein}, fibre:{fibre})
         2. DO NOT BOLD ANY TEXT
         4. Just return the plain text.
     """.strip()
