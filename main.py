@@ -123,3 +123,10 @@ def get_fibre():
     return {"fibre": data.get("Fibre", "")}
     # Or plain text:
     # return PlainTextResponse(data.get("Fibre", ""))
+
+@app.get("/ai_response")
+def get_ai_response():
+    doc = db.collection("MacroTrack_Ai").document("User").collection("Track").document("Dinner").get()
+    data = doc.to_dict() or {}
+    return {"ai": data.get("Ai_Response", "")}
+    # or: return PlainTextResponse(data.get("Ai_Response", ""))
