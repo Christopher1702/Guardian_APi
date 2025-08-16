@@ -74,8 +74,10 @@ async def receive_user_input(request: Request):
 
     protein_response = model.generate_content(protein_prompt)
     protein = protein_response.text.strip()
+
     calorie_response = model.generate_content(calorie_prompt)
     calorie = calorie_response.text.strip()
+
     fibre_response = model.generate_content(fibre_prompt)
     fibre = fibre_response.text.strip()
 
@@ -101,70 +103,87 @@ async def receive_user_input(request: Request):
 
 
 
-@app.get("/protein")
-def get_protein():
-    # Fetch Dinner protein
-    dinner_doc = db.collection("MacroTrack_Ai").document("User") \
-        .collection("Track").document("Dinner").get()
-    dinner_data = dinner_doc.to_dict() or {}
-    dinner_protein = float(dinner_data.get("Protein", 0))
-
-    # Fetch Total_Daily_Macro protein
-    total_doc = db.collection("MacroTrack_Ai").document("User") \
-        .collection("Track").document("Total_Daily_Macro").get()
-    total_data = total_doc.to_dict() or {}
-    total_protein = float(total_data.get("Protein", 0))
-
-    # Sum the values
-    total_sum = dinner_protein + total_protein
-
-    # Return as JSON
-    return {"protein": total_sum}
-
-
-@app.get("/calories")
-def get_calories():
-    doc = db.collection("MacroTrack_Ai").document("User").collection("Track").document("Total_Daily_Macro").get()
-    data = doc.to_dict() or {}
-    return {"calories": data.get("Calories", "")}
-    # If you prefer plain text instead of JSON:
-    # return PlainTextResponse(data.get("Calories", ""))
+def _safe_int(val) -> int:
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return 0
 
 @app.get("/calories")
 def get_calories():
     # Fetch Dinner calories
-    dinner_doc = db.collection("MacroTrack_Ai").document("User") \
-        .collection("Track").document("Dinner").get()
-    dinner_data = dinner_doc.to_dict() or {}
-    dinner_calories = float(dinner_data.get("Calories", 0))
+    raw_calories = db.collection("MacroTrack_Ai").document("User") \
+        .collection("Track").document("Dinner").get().to_dict().get("Calories", 0)
+    
+    # Fetch total daily calories
+    total_calories_existing = db.collection("MacroTrack_Ai").document("User") \
+        .collection("Track").document("Total_Daily_Macro").get().to_dict().get("Calories", 0)
 
-    # Fetch Total_Daily_Macro calories
-    total_doc = db.collection("MacroTrack_Ai").document("User") \
-        .collection("Track").document("Total_Daily_Macro").get()
-    total_data = total_doc.to_dict() or {}
-    total_calories = float(total_data.get("Calories", 0))
+    # Safely sum them
+    dinner_val = _safe_int(raw_calories)
+    total_val = _safe_int(total_calories_existing)
+    summed = dinner_val + total_val
 
-    # Sum the values
-    total_sum = dinner_calories + total_calories
+    # Save updated total back to Total_Daily_Macro
+    db.collection("MacroTrack_Ai").document("User").collection("Track") \
+        .document("Total_Daily_Macro").set({"Calories": summed}, merge=True)
 
-    return {"calories": total_sum}
+    # Return for frontend
+    return {"calories": summed}
+
+@app.get("/protein")
+def get_protein():
+    # Fetch Dinner + existing Total_Daily_Macro
+    dinner_raw = (
+        db.collection("MacroTrack_Ai").document("User")
+          .collection("Track").document("Dinner")
+          .get().to_dict().get("Protein", 0)
+    )
+    total_raw = (
+        db.collection("MacroTrack_Ai").document("User")
+          .collection("Track").document("Total_Daily_Macro")
+          .get().to_dict().get("Protein", 0)
+    )
+
+    # Safe sum
+    summed = _safe_int(dinner_raw) + _safe_int(total_raw)
+
+    # Persist back to Total_Daily_Macro
+    db.collection("MacroTrack_Ai").document("User") \
+      .collection("Track").document("Total_Daily_Macro") \
+      .set({"Protein": summed}, merge=True)
+
+    return {"protein": summed}
 
 
 @app.get("/fibre")
 def get_fibre():
-    # Fetch Dinner fibre
-    dinner_doc = db.collection("MacroTrack_Ai").document("User") \
-        .collection("Track").document("Dinner").get()
-    dinner_data = dinner_doc.to_dict() or {}
-    dinner_fibre = float(dinner_data.get("Fibre", 0))
+    # Fetch Dinner + existing Total_Daily_Macro
+    dinner_raw = (
+        db.collection("MacroTrack_Ai").document("User")
+          .collection("Track").document("Dinner")
+          .get().to_dict().get("Fibre", 0)
+    )
+    total_raw = (
+        db.collection("MacroTrack_Ai").document("User")
+          .collection("Track").document("Total_Daily_Macro")
+          .get().to_dict().get("Fibre", 0)
+    )
 
-    # Fetch Total_Daily_Macro fibre
-    total_doc = db.collection("MacroTrack_Ai").document("User") \
-        .collection("Track").document("Total_Daily_Macro").get()
-    total_data = total_doc.to_dict() or {}
-    total_fibre = float(total_data.get("Fibre", 0))
+    # Safe sum
+    summed = _safe_int(dinner_raw) + _safe_int(total_raw)
 
-    # Sum the values
-    total_sum = dinner_fibre + total_fibre
+    # Persist back to Total_Daily_Macro
+    db.collection("MacroTrack_Ai").document("User") \
+      .collection("Track").document("Total_Daily_Macro") \
+      .set({"Fibre": summed}, merge=True)
 
-    return {"fibre": total_sum}
+    return {"fibre": summed}
+
+
+@app.get("/ai_response")
+def get_ai_response():
+    doc = db.collection("MacroTrack_Ai").document("User").collection("Track").document("Dinner").get()
+    data = doc.to_dict() or {}
+    return {"ai": data.get("Ai_Response", "")}
+    # or: return PlainTextResponse(data.get("Ai_Response", ""))
