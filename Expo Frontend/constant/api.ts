@@ -1,0 +1,1 @@
+export const BASE_URL = "https://guardian-api-3uje.onrender.com";
